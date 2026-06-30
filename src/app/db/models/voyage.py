@@ -1,0 +1,23 @@
+"""Model for DemandForecast.Voyage_tbl. Generated from the live DB.
+
+Shared target for all companies. One Voyage row per source detail row.
+"""
+from datetime import date, time
+
+from sqlalchemy import ForeignKey, Integer
+from sqlalchemy.dialects.mssql import NVARCHAR
+from sqlalchemy.types import Date, Time
+from sqlalchemy.orm import Mapped, mapped_column
+
+from app.db.models.base import Base
+
+
+class Voyage(Base):
+    __tablename__ = "Voyage_tbl"
+    __table_args__ = {"schema": "DemandForecast"}
+
+    VoyageId: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    FileId: Mapped[int] = mapped_column(ForeignKey("DemandForecast.File_tbl.FileId"))
+    Voyage: Mapped[str] = mapped_column(NVARCHAR(100))
+    WORK_DATE: Mapped[date | None] = mapped_column(Date)
+    WorkTime: Mapped[time | None] = mapped_column(Time)
