@@ -5,7 +5,7 @@ GPA's per-file detail table. Raw rows from a GPA file land here.
 from datetime import date, time
 
 from sqlalchemy import ForeignKey, Integer
-from sqlalchemy.dialects.mssql import BIT, NVARCHAR
+from sqlalchemy.dialects.mssql import NVARCHAR
 from sqlalchemy.types import Date, Time
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -37,4 +37,4 @@ class GpaFileDetail(Base):
     TOTAL: Mapped[int | None] = mapped_column(Integer)
     RAIL_IM20: Mapped[int | None] = mapped_column(Integer)
     RAIL_IM40: Mapped[int | None] = mapped_column(Integer)
-    REPORTED: Mapped[bool | None] = mapped_column(BIT)
+    REPORTED: Mapped[str | None] = mapped_column(NVARCHAR(50))
