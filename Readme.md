@@ -27,15 +27,14 @@ pip install -r requirements.txt
 
 ## Running the CLI
 
-**Where to run from:** always the **project root** — the folder that contains
-`run.py` (`...\ForecastDemend`). Run everything through `run.py`; it puts `src/`
-on the path for you, so there is no `PYTHONPATH` to set and you never `cd` into
-`src/`.
+**Recommended — use `run.py` from the project root.** Run everything through
+`run.py`; it puts `src/` on the path for you, so there is no `PYTHONPATH` to set
+and you never `cd` into `src/`.
 
 **Steps (PowerShell):**
 
 ```powershell
-# 1. go to the project root
+# 1. go to the project root (the folder that contains run.py)
 cd C:\Users\nbutnejski\Desktop\CCM_Workplace\work\PythonFlask\ForecastDemend
 
 # 2. activate the virtualenv (once per terminal; prompt then shows (.venv))
@@ -49,6 +48,21 @@ If activating the venv is blocked by an execution policy, either allow it for th
 session with `Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned`,
 or skip activation and call the venv Python directly:
 `.\.venv\Scripts\python.exe run.py --help`.
+
+### Where you run from matters
+
+The `app` package lives in `src/`, and the project is **not** pip-installed, so
+Python only finds `app` if `src/` is on the path. That gives two valid ways to
+run — pick one:
+
+| Command | Run it from | Notes |
+|---------|-------------|-------|
+| `python run.py <command>` | **project root** (`...\ForecastDemend`) | Recommended. `run.py` adds `src/` to the path for you. |
+| `python -m app.entrypoints.cli <command>` | **the `src/` folder** | Direct module form. `python -m` only puts the *current* folder on the path, so you must be inside `src/` (`cd src` first). |
+
+Running `python -m app.entrypoints.cli` from the project root fails with
+`ModuleNotFoundError: No module named 'app'` — because from the root, `app` isn't
+on the path. Either `cd src` first, or just use `python run.py` from the root.
 
 There are three commands.
 
