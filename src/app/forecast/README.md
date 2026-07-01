@@ -1,4 +1,4 @@
-# Goldilocks
+# Forecasting
 
 Hybrid data-access for the chassis demand-forecasting model store. Split by
 **layer**, not by feature. Writes with a constraint attached go through T-SQL
@@ -11,10 +11,10 @@ This keeps the T-SQL surface small, stable, and rarely touched.
 ## Layers
 | Path | Layer | Contains | Tested by |
 |------|-------|----------|-----------|
-| `sql/` | write surface | TVP types + procs (score run, actuals upsert, register model) | integration |
-| `db/` | access | one engine + `WriteGateway` / `ReadGateway` | integration |
-| `forecast/` | domain | pure scoring math + `TrainedModel` value object (no I/O) | unit |
-| `pipelines/` | orchestration | compute-then-commit glue scripts | smoke run |
+| `sql` | write surface | TVP types + procs (score run, actuals upsert, register model) | integration |
+| `db` | access | one engine + `WriteGateway` / `ReadGateway` | integration |
+| `forecast` | domain | pure scoring math + `TrainedModel` value object (no I/O) | unit |
+| `pipelines` | orchestration | compute-then-commit glue scripts | smoke run |
 
 ## Data flow (a scoring run)
 1. Hold a `TrainedModel` (from training - carries coefficients + (X'X)^-1).
