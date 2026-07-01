@@ -15,9 +15,8 @@ class VoyageDetails(Base):
 
     VoyageDetailsId: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     VoyageId: Mapped[int] = mapped_column(ForeignKey("DemandForecast.Voyage_tbl.VoyageId"))
-    FieldTypeValueEquipTypeId: Mapped[int | None] = mapped_column(
-        ForeignKey("DemandForecast.FieldTypeValue_tbl.FieldTypeValueId")
-    )
+    # DB-level FK to FieldTypeValue_tbl (lookup not mapped in the ORM): plain Integer.
+    FieldTypeValueEquipTypeId: Mapped[int | None] = mapped_column(Integer)
     ModeId: Mapped[int | None] = mapped_column(ForeignKey("DemandForecast.Mode_tbl.ModeId"))
     DirectionId: Mapped[int | None] = mapped_column(
         ForeignKey("DemandForecast.Direction_tbl.DirectionId")
