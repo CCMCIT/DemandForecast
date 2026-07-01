@@ -9,7 +9,7 @@ from datetime import date, time
 
 @dataclass
 class MappedDetail:
-    field_type_value_id: int
+    field_type_value_id: int | None
     mode_name: str
     direction_name: str
     container_loaded_flag: int

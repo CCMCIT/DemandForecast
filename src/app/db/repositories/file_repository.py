@@ -13,3 +13,10 @@ class FileRepository:
 
     def get(self, file_id: int) -> File | None:
         return self.session.get(File, file_id)
+
+    def get_by_load_status(self, load_status_id: int) -> list[File]:
+        return (
+            self.session.query(File)
+            .filter(File.LoadStatusId == load_status_id)
+            .all()
+        )

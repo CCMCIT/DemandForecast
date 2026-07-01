@@ -10,16 +10,18 @@ the same shape; the writer and runner are reused unchanged (Open/Closed).
 from app.processing.dto import MappedDetail, MappedVoyage
 
 # (GpaFileDetail column, FieldTypeValueEquipTypeId, direction name, mode name, container loaded flag)
+# FieldTypeValueEquipTypeId encodes the container size: 20 -> 1, 40 -> 2, 45 -> 3,
+# and the empties (MT) -> None.
 GPA_COLUMN_MAP = [
     ("IM_FULL20", 1, "Import", "Vessel", 1),
     ("IM_FULL40", 2, "Import", "Vessel", 1),
     ("IM_FULL45", 3, "Import", "Vessel", 1),
-    ("IM_MT", 4, "Import", "Vessel", 0),
-    ("EX_FULL20", 5, "Export", "Vessel", 1),
-    ("EX_FULL40", 6, "Export", "Vessel", 1),
-    ("EX_MT", 7, "Export", "Vessel", 0),
-    ("RAIL_IM20", 8, "Import", "Rail", 0),
-    ("RAIL_IM40", 9, "Import", "Rail", 0),
+    ("IM_MT", None, "Import", "Vessel", 0),
+    ("EX_FULL20", 1, "Export", "Vessel", 1),
+    ("EX_FULL40", 2, "Export", "Vessel", 1),
+    ("EX_MT", None, "Export", "Vessel", 0),
+    ("RAIL_IM20", 1, "Import", "Rail", 0),
+    ("RAIL_IM40", 2, "Import", "Rail", 0),
 ]
 
 
