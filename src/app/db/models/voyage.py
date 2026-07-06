@@ -4,7 +4,7 @@ Shared target for all companies. One Voyage row per source detail row.
 """
 from datetime import date, time
 
-from sqlalchemy import ForeignKey, Integer
+from sqlalchemy import ForeignKey, Integer, text
 from sqlalchemy.dialects.mssql import NVARCHAR
 from sqlalchemy.types import Date, Time
 from sqlalchemy.orm import Mapped, mapped_column
@@ -21,3 +21,6 @@ class Voyage(Base):
     Voyage: Mapped[str] = mapped_column(NVARCHAR(100))
     WORK_DATE: Mapped[date | None] = mapped_column(Date)
     WorkTime: Mapped[time | None] = mapped_column(Time)
+    # DB-level FK to VoyageStatus_tbl (lookup mirrored in app.lookups.VoyageStatus).
+    # Server default 1 (ToCall); the writer also sets it explicitly on every write.
+    VoyageStatusId: Mapped[int] = mapped_column(Integer, server_default=text("1"))

@@ -33,13 +33,16 @@ def map_row(detail) -> MappedVoyage:
         work_time=detail.WORKTIME,
     )
     for column, field_type_value_id, direction, mode, loaded in GPA_COLUMN_MAP:
+        containers = getattr(detail, column)
+        if containers is None:
+            continue  # empty column carries no data -> no VoyageDetails row
         voyage.details.append(
             MappedDetail(
                 field_type_value_id=field_type_value_id,
                 mode_name=mode,
                 direction_name=direction,
                 container_loaded_flag=loaded,
-                containers=getattr(detail, column),
+                containers=containers,
             )
         )
     return voyage
