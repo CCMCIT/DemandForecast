@@ -19,3 +19,9 @@ class LoadStatus(IntEnum):
     INSERTED_INTO_VOYAGE = 3
     INSERTED_INTO_VOYAGE_DETAIL = 4   # processing done
     ERROR = 5
+
+
+class VoyageStatus(IntEnum):
+    TO_CALL = 1     # on the current report
+    CALLED = 2      # fell off the report and was assessed as called
+    CANCELLED = 3   # fell off the report and was assessed as cancelled
