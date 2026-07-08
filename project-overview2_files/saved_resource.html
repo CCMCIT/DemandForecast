@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<!-- saved from url=(0253)https://576aa175-b887-4f64-90ba-088603b8128b.frame.claudeusercontent.com/_f/1783005939-5865/?__frame_t=Z8ARplQkehhUbojkrR87pLwB.d4a8c0da-b8ea-41f9-a004-f3dab7f245dc.2f5817ea-0abe-4603-b8af-9f76a06b45da.1783009555&__frame_v=manifest.6366308da1b422af.json -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><!-- frame-runtime --><!--<base href="/_f/1783005939-5865/">--><base href="."><script>window.__FRAME_PREAMBLE={"capabilities":{"mcp":"mcp.BQqQVVN_.js"},"transforms":"_transforms.DYk1Ltlh.js"}</script><script>(function(){"use strict";const z="modulepreload",x=function(e){return"/"+e},W={},C=function(n,t,u){let o=Promise.resolve();function i(f){const a=new Event("vite:preloadError",{cancelable:!0});if(a.payload=f,window.dispatchEvent(a),!a.defaultPrevented)throw f}return o.then(f=>{for(const a of f||[])a.status==="rejected"&&i(a.reason);return n().catch(i)})};function A(e){if(e==null||typeof e!="object")return!1;const n=e.__frame_init;return n!=null&&typeof n=="object"}function O(e){if(window===top||e.type==="auxclick"&&e.button!==1)return;const n=e.composedPath?e.composedPath():[e.target];let t=null;for(let f=0;f<n.length;f++){const a=n[f];if(a&&a.matches&&a.matches("a[href],area[href]")){t=a;break}}if(!t&&e.target&&e.target.closest&&(t=e.target.closest("a[href],area[href]")),!t)return;const u=t.getAttribute("href");if(!u)return;let o,i;try{o=new URL(u,document.baseURI),i=new URL(document.baseURI).origin}catch{return}(o.protocol==="http:"||o.protocol==="https:")&&o.origin!==i&&(e.preventDefault(),parent.postMessage({__frame_nav:!0,url:o.href},"*"))}const M={};function v(e){if(window===top)return;const n=Date.now();n-(M[e]||0)<500||(M[e]=n,parent.postMessage({__frame_engaged:!0,kind:e},"*"))}function T(){addEventListener("click",O,!0),addEventListener("auxclick",O,!0)}function N(){addEventListener("scroll",()=>v("scroll"),{capture:!0,passive:!0}),addEventListener("pointermove",()=>v("pointer"),{capture:!0,passive:!0}),addEventListener("click",()=>v("click"),{capture:!0,passive:!0})}function $(e,n,t){const u=[...n.values()].filter(o=>o.targets.some(i=>i.startsWith(e+".")));return{wrap(o,i){const f=`${e}.${o}`,a=u.filter(s=>s.targets.includes(f));return a.length===0?(...s)=>{try{return i(...s)}catch(d){return Promise.reject(d)}}:(...s)=>{let d=s;for(const c of a){const l=c.module.parameters;if(l)try{d=l(d)}catch{return Promise.reject({code:"transform_error",id:c.id,scope:e,message:"parameters transform failed"})}}let g;try{g=i(...d)}catch(c){g=Promise.reject(c)}return g.then(c=>{for(let l=a.length-1;l>=0;l--){const p=a[l],m=p.module.returns;if(m)try{c=m(c)}catch{return t({id:p.id,scope:e,leg:"returns"}),c}}return c},c=>{for(let l=a.length-1;l>=0;l--){const p=a[l],m=p.module.throws;if(m)try{c=m(c)}catch{return t({id:p.id,scope:e,leg:"throws"}),Promise.reject(c)}}return Promise.reject(c)})}}}}function q(e,n,t,u=()=>{}){const o=new Set(e.changes??[]),i=new Map;for(const f of o){const a=n[f];a&&i.set(f,a)}return{contract:e.contract,changes:o,flags:new Set(e.flags??[]),capabilities:e.capabilities??{},transforms:i,shellOrigin:t.shellOrigin,mount:t.mount,pipe:f=>$(f,i,u)}}(function(){const e=Object.defineProperty,n=globalThis,t=["RTCPeerConnection","webkitRTCPeerConnection","RTCDataChannel","RTCIceCandidate","RTCSessionDescription","RTCRtpSender","RTCRtpReceiver"];let u=0;for(let o=0;o<t.length;o++){const i=t[o];try{e(n,i,{value:void 0,writable:!1,configurable:!1})}catch{try{delete n[i]}catch{}try{e(n,i,{value:void 0,writable:!1,configurable:!0})}catch{}}typeof n[i]=="function"&&u++}if(u&&window!==top)try{parent.postMessage({__frame_rtc_lockdown_failed:u},"*")}catch{}})();const I=1e4,U=Object.freeze([...window.__FRAME_PREAMBLE?.origins??["https://claude.ai","https://preview.claude.ai"]]);function D(e){for(const n of U)if(n.endsWith(":*"))try{const t=new URL(e);if(`${t.protocol}//${t.hostname}:*`===n)return!0}catch{}else if(e===n)return!0;return!1}const _=Object.freeze({...window.__FRAME_PREAMBLE?.capabilities??{}}),y=window.__FRAME_PREAMBLE?.transforms,S=/^[\w.-]+\.js$/,B=/^[a-z][a-z0-9_-]{0,63}$/;let L=null,b=null;function E(e,n,t){try{Object.defineProperty(e,n,{value:t,writable:!1,configurable:!1,enumerable:!0})}catch{try{Object.defineProperty(e,n,{value:t,writable:!1,configurable:!0,enumerable:!0})}catch{}}}const h=new Map;function F(e,n){const t=h.get(e);if(!t)return;Object.assign(t.impl,n),t.impl.__settled=()=>Promise.reject({code:"capability_removed",message:`${e}: method not in this runtime`});const u=t.queue;t.queue=[];for(const o of u){const i=n[o.method];i?i(...o.args).then(o.resolve,o.reject):o.reject({code:"capability_removed",message:`${e}.${o.method} is not in this runtime`})}}function P(e,n){const t=h.get(e);if(!t)return;t.impl.__settled=()=>Promise.reject(n);const u=t.queue;t.queue=[];for(const o of u)o.reject(n)}const R=Object.getOwnPropertyDescriptor(window,"claude");if(window!==top&&!(R&&R.writable===!1)){T(),N();const e=R?.value??{};E(window,"claude",e);const n=s=>{const d={impl:Object.create(null),queue:[]};h.set(s,d);const g=new Proxy(d.impl,{get:(c,l)=>{if(typeof l=="string"&&!(l==="then"||l==="toJSON"||l==="valueOf"))return l==="toString"?Object.prototype.toString:(...p)=>{const m=c[l]??c.__settled;return m?m(...p):new Promise((j,r)=>{d.queue.push({method:l,args:p,resolve:j,reject:r})})}},set:()=>!1});E(e,s,g)};for(const s of Object.keys(_)){if(e[s]!==void 0){E(e,s,e[s]);continue}n(s)}let t=null,u=null,o=0;const i=s=>{s.source!==parent||!D(s.origin)||A(s.data)&&(t=s.data.__frame_init,b=s.origin,removeEventListener("message",i),clearTimeout(o),u?.())};addEventListener("message",i),parent.postMessage({__frame_connect:!0},"*");const f=new Promise(s=>{u=s,o=setTimeout(()=>{removeEventListener("message",i),s()},I)}),a=document.readyState==="loading"?new Promise(s=>document.addEventListener("DOMContentLoaded",()=>s(),{once:!0})):Promise.resolve();f.then(async()=>{if(!t||!b){for(const r of h.keys())P(r,{code:"not_granted",message:"frame initialization did not arrive - capability unavailable"});return}const s=r=>C(()=>import("/_runtime/"+r),void 0),d=Object.keys(t.capabilities??{});for(const r of d)Object.hasOwn(_,r)||B.test(r)&&e[r]===void 0&&(n(r),P(r,{code:"capability_disabled",message:"capability not in this runtime generation"}));const g=d.filter(r=>Object.hasOwn(_,r)).map(r=>[r,_[r]]).filter(r=>typeof r[1]=="string"&&S.test(r[1])),[c,...l]=await Promise.allSettled([y&&S.test(y)?s(y):Promise.resolve({}),...g.map(([,r])=>s(r))]),p=b;L=q(t,c.status==="fulfilled"&&c.value?.TRANSFORMS||{},{shellOrigin:p,mount:F},r=>parent.postMessage({__frame_cap_telemetry:r},p));const m=r=>parent.postMessage({__frame_cap_telemetry:{kind:"cap-load-error",cap:r}},p),j=L;l.forEach((r,w)=>{const k=g[w][0];if(r.status!=="fulfilled"){m(k);return}try{r.value?.install?.(j)}catch{m(k)}});for(const[r,w]of h)w.queue.length===0&&Object.keys(w.impl).length>0||P(r,{code:d.includes(r)?"capability_disabled":"not_granted",message:"capability not available in this session"});await a,parent.postMessage({__frame_ready:!0},b)})}})();</script><!-- /frame-runtime --><meta name="viewport" content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}</style></head><body>
+<style>
+  :root {
+    --paper:   #EDF1F5;
+    --paper-2: #E3E9EF;
+    --panel:   #F7F9FB;
+    --ink:     #16283B;
+    --ink-soft:#4B5D70;
+    --rule:    #CBD6E0;
+    --rule-2:  #D9E1E9;
+    --oxide:   #B0512A;   /* container / primary accent */
+    --steel:   #34617F;   /* import lane / links */
+    --teal:    #1E6E62;   /* rail / processed */
+    --amber:   #8C6410;
+    --brick:   #8C3A34;   /* error */
+    --code-bg: #10233A;
+    --code-fg: #D6E1EC;
+    --code-dim:#7C93AB;
+
+    --font-display: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+    --font-body: Charter, "Bitstream Charter", "Iowan Old Style", Georgia, Cambria, "Times New Roman", serif;
+    --font-mono: "Cascadia Code", "Cascadia Mono", ui-monospace, "SF Mono", "JetBrains Mono", Consolas, "Liberation Mono", Menlo, monospace;
+
+    --measure: 68ch;
+    --frame: 960px;
+  }
+
+  * { box-sizing: border-box; }
+
+  .doc {
+    background:
+      linear-gradient(var(--paper), var(--paper)),
+      repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(52,97,127,.04) 39px, rgba(52,97,127,.04) 40px);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 1.075rem;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    padding: 0 1.25rem 6rem;
+  }
+
+  .wrap { max-width: var(--frame); margin: 0 auto; }
+  .prose { max-width: var(--measure); }
+  .prose p { margin: 0 0 1rem; }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: .72rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--steel);
+    margin: 0;
+  }
+
+  h1, h2, h3 { font-family: var(--font-display); font-weight: 700; text-wrap: balance; color: var(--ink); }
+  h1 { font-size: clamp(2.1rem, 5.2vw, 3.4rem); line-height: 1.04; letter-spacing: -.025em; margin: .5rem 0 0; }
+  h2 { font-size: clamp(1.5rem, 3vw, 2.05rem); line-height: 1.1; letter-spacing: -.02em; margin: 0; }
+  h3 { font-size: 1.12rem; letter-spacing: -.01em; margin: 0 0 .4rem; }
+
+  a { color: var(--steel); text-underline-offset: 3px; text-decoration-thickness: 1px; }
+  a:focus-visible, .stage:focus-visible { outline: 2px solid var(--oxide); outline-offset: 3px; }
+
+  code { font-family: var(--font-mono); font-size: .9em; background: var(--paper-2); padding: .08em .32em; border-radius: 3px; }
+
+  /* ---- hero / manifest header ---- */
+  .hero { padding: 4.5rem 0 2.5rem; }
+  .manifest {
+    margin-top: 2rem;
+    border: 1px solid var(--rule);
+    border-top: 3px solid var(--oxide);
+    background: var(--panel);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+  .manifest .cell { padding: .85rem 1.1rem; border-right: 1px solid var(--rule-2); border-top: 1px solid var(--rule-2); }
+  .manifest .cell:first-child { border-top: none; }
+  .manifest .k { font-family: var(--font-mono); font-size: .66rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-soft); }
+  .manifest .v { font-family: var(--font-mono); font-size: .98rem; color: var(--ink); margin-top: .2rem; font-weight: 600; }
+
+  .lede { font-size: 1.22rem; line-height: 1.5; color: var(--ink-soft); margin: 1.4rem 0 0; max-width: 60ch; }
+
+  /* ---- sections ---- */
+  section { padding: 3.4rem 0 0; }
+  .sec-head { display: flex; align-items: baseline; gap: 1rem; border-bottom: 1px solid var(--rule); padding-bottom: .9rem; margin-bottom: 1.6rem; }
+  .sec-no { font-family: var(--font-mono); font-size: .8rem; color: var(--oxide); font-weight: 600; letter-spacing: .05em; padding-top: .35rem; white-space: nowrap; }
+
+  /* ---- flow diagram ---- */
+  .scroll { overflow-x: auto; padding-bottom: .5rem; }
+  .flow { display: grid; gap: 1.4rem; min-width: 720px; margin: .4rem 0 1.4rem; }
+  .lane { border: 1px solid var(--rule); background: var(--panel); }
+  .lane-tag { font-family: var(--font-mono); font-size: .68rem; letter-spacing: .12em; text-transform: uppercase; padding: .5rem .9rem; border-bottom: 1px solid var(--rule-2); display: flex; justify-content: space-between; }
+  .lane.ingest .lane-tag { color: var(--steel); }
+  .lane.process .lane-tag { color: var(--teal); }
+  .lane-body { display: flex; align-items: stretch; gap: 0; padding: 1rem; }
+  .node { flex: 1; min-width: 120px; padding: .7rem .8rem; text-align: center; }
+  .node .nlabel { font-family: var(--font-mono); font-size: .78rem; font-weight: 600; }
+  .node .nsub { font-size: .78rem; color: var(--ink-soft); line-height: 1.35; margin-top: .25rem; }
+  .arrow { display: flex; align-items: center; color: var(--oxide); font-family: var(--font-mono); font-weight: 700; padding: 0 .1rem; }
+  .tbl-node { border: 1px dashed var(--rule); background: var(--paper); border-radius: 4px; }
+
+  /* ---- status track ---- */
+  .track { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1.2rem 0 0; font-family: var(--font-mono); }
+  .status { display: flex; align-items: center; gap: .5rem; border: 1px solid var(--rule); background: var(--panel); padding: .5rem .7rem; border-radius: 4px; font-size: .82rem; }
+  .status .dot { width: .7rem; height: .7rem; border-radius: 50%; flex: none; }
+  .status b { font-weight: 700; }
+  .d1 { background: #9AA9B6; } .d2 { background: var(--steel); } .d3 { background: var(--amber); } .d4 { background: var(--teal); } .d5 { background: var(--brick); }
+
+  /* ---- code ---- */
+  figure.code { margin: 1.4rem 0; border-radius: 5px; overflow: hidden; border: 1px solid #0b1a2c; }
+  .code-head { background: #0b1a2c; color: var(--code-dim); font-family: var(--font-mono); font-size: .72rem; letter-spacing: .04em; padding: .5rem .95rem; display: flex; justify-content: space-between; }
+  .code-head .path { color: #9db3c9; }
+  pre { margin: 0; background: var(--code-bg); color: var(--code-fg); font-family: var(--font-mono); font-size: .84rem; line-height: 1.6; padding: 1rem 1.1rem; overflow-x: auto; }
+  pre .c { color: var(--code-dim); font-style: italic; }
+  pre .k { color: #E39B6E; }
+  pre .s { color: #86C7B4; }
+  pre .n { color: #E7B36B; }
+  pre .f { color: #9DC3E6; }
+
+  /* ---- tables ---- */
+  table { border-collapse: collapse; width: 100%; font-family: var(--font-mono); font-size: .82rem; background: var(--panel); }
+  caption { text-align: left; font-family: var(--font-mono); font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); padding: 0 0 .5rem; }
+  th, td { border: 1px solid var(--rule-2); padding: .42rem .6rem; text-align: left; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  th { background: var(--paper-2); font-weight: 700; color: var(--ink); }
+  td.num { text-align: right; }
+  .figtable { margin: 1.4rem 0; }
+
+  /* ---- unpivot showcase ---- */
+  .unpivot { display: grid; grid-template-columns: 1fr auto 1.15fr; gap: 1rem; align-items: center; margin: 1.6rem 0; }
+  .source-row { border: 1px solid var(--rule); background: var(--panel); border-radius: 5px; padding: .9rem; }
+  .source-row .rh { font-family: var(--font-mono); font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: .6rem; }
+  .cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: .4rem; }
+  .col { font-family: var(--font-mono); font-size: .74rem; border: 1px solid var(--rule-2); border-radius: 3px; padding: .35rem .4rem; text-align: center; }
+  .col .cn { color: var(--ink-soft); font-size: .66rem; }
+  .col .cv { font-weight: 700; font-size: .95rem; }
+  .col.imp { border-left: 3px solid var(--steel); }
+  .col.exp { border-left: 3px solid var(--oxide); }
+  .col.rail { border-left: 3px solid var(--teal); }
+  .col.mt { opacity: .82; }
+  .fan { font-family: var(--font-mono); color: var(--oxide); font-weight: 700; font-size: 1.5rem; text-align: center; }
+  .details-stack { display: flex; flex-direction: column; gap: .35rem; }
+  .drow { display: grid; grid-template-columns: auto auto auto auto 1fr; gap: .5rem; align-items: center; font-family: var(--font-mono); font-size: .72rem; border: 1px solid var(--rule-2); background: var(--panel); border-radius: 3px; padding: .3rem .5rem; }
+  .pill { font-size: .64rem; letter-spacing: .04em; text-transform: uppercase; padding: .1rem .38rem; border-radius: 20px; font-weight: 700; }
+  .pill.imp { color: var(--steel); background: rgba(52,97,127,.12); }
+  .pill.exp { color: var(--oxide); background: rgba(176,81,42,.12); }
+  .pill.rail { color: var(--teal); background: rgba(30,110,98,.12); }
+  .drow .qty { text-align: right; font-weight: 700; }
+
+  /* ---- reason cards ---- */
+  .reasons { display: grid; gap: .1rem; margin: 1.6rem 0; border: 1px solid var(--rule); }
+  .reason { display: grid; grid-template-columns: 2.4rem 1fr; gap: 1rem; padding: 1.15rem 1.2rem; background: var(--panel); border-top: 1px solid var(--rule-2); }
+  .reason:first-child { border-top: none; }
+  .reason .rn { font-family: var(--font-mono); font-weight: 700; color: var(--oxide); font-size: .95rem; }
+  .reason p { margin: .3rem 0 0; font-size: .98rem; }
+  .reason strong { font-family: var(--font-display); }
+
+  .note { border-left: 3px solid var(--steel); background: var(--panel); padding: .9rem 1.1rem; margin: 1.4rem 0; font-size: .98rem; }
+  .callout { border-left: 3px solid var(--oxide); background: rgba(176,81,42,.05); padding: .9rem 1.1rem; margin: 1.4rem 0; font-size: .98rem; }
+
+  hr.rule { border: none; border-top: 1px solid var(--rule); margin: 3.4rem 0 0; }
+  footer { margin-top: 2.4rem; font-family: var(--font-mono); font-size: .78rem; color: var(--ink-soft); }
+  footer .cmds { display: grid; gap: .3rem; margin-top: .8rem; }
+  footer .cmds code { background: var(--code-bg); color: var(--code-fg); padding: .35rem .6rem; border-radius: 3px; display: block; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 720px) {
+    .unpivot { grid-template-columns: 1fr; }
+    .fan { transform: rotate(90deg); }
+    .two-col { grid-template-columns: 1fr; }
+    .reason { grid-template-columns: 1.8rem 1fr; }
+  }
+
+  .fade { opacity: 0; transform: translateY(8px); animation: rise .6s ease forwards; }
+  @keyframes rise { to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .fade { animation: none; opacity: 1; transform: none; } * { scroll-behavior: auto; } }
+</style>
+
+<div class="doc">
+<div class="wrap">
+
+  <!-- ================= HERO ================= -->
+  <header class="hero fade">
+    <p class="eyebrow">DemandForecast · data pipeline</p>
+    <h1>From daily port files<br>to voyage records</h1>
+    <p class="lede">A modular Python pipeline that reads a shipping terminal's daily file, stages it verbatim, then unpivots it into structured voyage and container-movement rows — ready for forecasting.</p>
+
+    <div class="manifest">
+      <div class="cell"><div class="k">Engine</div><div class="v">MS SQL Server</div></div>
+      <div class="cell"><div class="k">Driver</div><div class="v">pyodbc</div></div>
+      <div class="cell"><div class="k">ORM</div><div class="v">SQLAlchemy</div></div>
+      <div class="cell"><div class="k">Schema</div><div class="v">DemandForecast</div></div>
+      <div class="cell"><div class="k">Parsing</div><div class="v">pandas · csv</div></div>
+      <div class="cell"><div class="k">Posture</div><div class="v">Database-first</div></div>
+    </div>
+  </header>
+
+  <!-- ================= 1. FLOW ================= -->
+  <section>
+    <div class="sec-head"><span class="sec-no">01</span><h2>The code structure flow is this</h2></div>
+    <div class="prose">
+      <p>The pipeline runs in two phases, and each phase is a straight line: <strong>read a file, hand rows to a repository, let the repository write the tables.</strong> Nothing in the middle touches the database, and nothing at the edges knows SQL. A file's type is decided once, by its filename prefix (<code>GPA</code>), and that choice selects every handler for the rest of the run.</p>
+    </div>
+
+    <div class="scroll">
+      <div class="flow">
+        <div class="lane ingest">
+          <div class="lane-tag"><span>Phase 1a · Ingestion</span><span>file on disk → staging</span></div>
+          <div class="lane-body">
+            <div class="node"><div class="nlabel">GPA file</div><div class="nsub">CSV / Excel<br>on disk</div></div>
+            <div class="arrow">→</div>
+            <div class="node"><div class="nlabel">Reader</div><div class="nsub">parse to<br>list[dict]</div></div>
+            <div class="arrow">→</div>
+            <div class="node"><div class="nlabel">Loader</div><div class="nsub">rows to<br>models</div></div>
+            <div class="arrow">→</div>
+            <div class="node tbl-node"><div class="nlabel">File_tbl</div><div class="nsub">+ GpaFileDetail_tbl</div></div>
+          </div>
+        </div>
+        <div class="lane process">
+          <div class="lane-tag"><span>Phase 1b · Processing</span><span>staging → voyages</span></div>
+          <div class="lane-body">
+            <div class="node tbl-node"><div class="nlabel">GpaFileDetail_tbl</div><div class="nsub">staged rows</div></div>
+            <div class="arrow">→</div>
+            <div class="node"><div class="nlabel">Mapper</div><div class="nsub">unpivot<br>columns</div></div>
+            <div class="arrow">→</div>
+            <div class="node"><div class="nlabel">Writer</div><div class="nsub">via<br>repositories</div></div>
+            <div class="arrow">→</div>
+            <div class="node tbl-node"><div class="nlabel">Voyage_tbl</div><div class="nsub">+ VoyageDetails_tbl</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="prose">
+      <p>Each layer has exactly one job, and layers only depend inward:</p>
+      <ul>
+        <li><strong>readers</strong> parse a file into <code>list[dict]</code> — no database.</li>
+        <li><strong>repositories</strong> are the only place that reads or writes a table.</li>
+        <li><strong>ingestion / processing</strong> orchestrate a run but hold no SQL.</li>
+        <li><strong>mapping</strong> is the only place that knows GPA's columns.</li>
+      </ul>
+      <p>A file's progress is tracked by a single <code>LoadStatusId</code> on its <code>File_tbl</code> row. It is also the resume marker: processing writes voyages first (status&nbsp;3), then details (status&nbsp;4), so an interrupted run picks up exactly where it stopped.</p>
+    </div>
+
+    <div class="track" role="list">
+      <div class="status" role="listitem"><span class="dot d1"></span><span><b>1</b> File</span></div>
+      <div class="arrow">→</div>
+      <div class="status" role="listitem"><span class="dot d2"></span><span><b>2</b> FileDetail</span></div>
+      <div class="arrow">→</div>
+      <div class="status" role="listitem"><span class="dot d3"></span><span><b>3</b> Voyage</span></div>
+      <div class="arrow">→</div>
+      <div class="status" role="listitem"><span class="dot d4"></span><span><b>4</b> VoyageDetails</span></div>
+      <div class="status" role="listitem" style="margin-left:.6rem"><span class="dot d5"></span><span><b>5</b> Error</span></div>
+    </div>
+  </section>
+
+  <!-- ================= 2. HOW ================= -->
+  <section>
+    <div class="sec-head"><span class="sec-no">02</span><h2>How it does it, layer by layer</h2></div>
+
+    <div class="prose">
+      <p><strong>The reader</strong> turns a file into plain dictionaries and normalises the headers. It never coerces types and never touches the database — that keeps it trivial to swap CSV for Excel later.</p>
+    </div>
+    <figure class="code">
+      <div class="code-head"><span>ingestion/gpa/reader.py</span><span class="path">GpaReader</span></div>
+<pre><span class="k">class</span> <span class="f">GpaReader</span>(BaseReader):
+    <span class="k">def</span> <span class="f">read</span>(self, path) -&gt; list[dict]:
+        <span class="c"># utf-8-sig drops the BOM some exporters add to the first header.</span>
+        <span class="k">with</span> open(path, newline=<span class="s">""</span>, encoding=<span class="s">"utf-8-sig"</span>) <span class="k">as</span> f:
+            <span class="k">return</span> [self._normalise(row) <span class="k">for</span> row <span class="k">in</span> csv.DictReader(f)]</pre>
+    </figure>
+
+    <div class="prose">
+      <p><strong>The loader</strong> takes those raw dicts, coerces each value once (<code>"20250918"</code> → a real <code>date</code>, blanks → <code>None</code>), builds model objects, and hands them to a repository. All DB access goes through that repository — the loader itself writes no SQL.</p>
+    </div>
+    <figure class="code">
+      <div class="code-head"><span>ingestion/gpa/loader.py</span><span class="path">GpaLoader</span></div>
+<pre><span class="k">class</span> <span class="f">GpaLoader</span>(BaseLoader):
+    <span class="k">def</span> <span class="f">load</span>(self, session, file_id: int, rows: list[dict]) -&gt; None:
+        repo = GpaFileDetailRepository(session)
+        repo.add_all([self._to_model(file_id, row) <span class="k">for</span> row <span class="k">in</span> rows])
+
+    <span class="k">def</span> <span class="f">_to_model</span>(self, file_id, row) -&gt; GpaFileDetail:
+        <span class="k">return</span> GpaFileDetail(
+            FileId=file_id,
+            VOYAGE=self._text(row.get(<span class="s">"VOYAGE"</span>)),
+            WORK_DATE=self._date(row.get(<span class="s">"WORK_DATE"</span>)),   <span class="c"># YYYYMMDD -&gt; date</span>
+            IM_FULL20=self._int(row.get(<span class="s">"IM_FULL20"</span>)),   <span class="c"># "" -&gt; None</span>
+            <span class="c"># ... one field per column</span>
+        )</pre>
+    </figure>
+
+    <div class="prose">
+      <p><strong>The models</strong> reflect tables that already exist in the database. The code never issues <code>CREATE</code> or <code>ALTER</code> — a model is a typed Python view of a live table, nothing more.</p>
+    </div>
+    <figure class="code">
+      <div class="code-head"><span>db/models/file.py</span><span class="path">File → DemandForecast.File_tbl</span></div>
+<pre><span class="k">class</span> <span class="f">File</span>(Base):
+    __tablename__ = <span class="s">"File_tbl"</span>
+    __table_args__ = {<span class="s">"schema"</span>: <span class="s">"DemandForecast"</span>}
+
+    FileId: Mapped[int]      = mapped_column(Integer, primary_key=<span class="n">True</span>, autoincrement=<span class="n">True</span>)
+    FileName: Mapped[str]    = mapped_column(NVARCHAR(<span class="n">255</span>))
+    FileTypeId: Mapped[int]  = mapped_column(Integer)   <span class="c"># FK -&gt; FileType_tbl</span>
+    LoadStatusId: Mapped[int]= mapped_column(Integer)   <span class="c"># FK -&gt; LoadStatus_tbl</span></pre>
+    </figure>
+
+    <div class="prose">
+      <p><strong>The mapper</strong> is the one GPA-aware piece of processing. An explicit table — no name-sniffing — says what each container column means, and the unpivot loop turns one wide staging row into many detail rows, skipping empty columns.</p>
+    </div>
+    <figure class="code">
+      <div class="code-head"><span>processing/gpa/mapper.py</span><span class="path">the unpivot</span></div>
+<pre><span class="c"># (column, EquipTypeId, direction, mode, loaded flag)</span>
+GPA_COLUMN_MAP = [
+    (<span class="s">"IM_FULL20"</span>, <span class="n">1</span>, <span class="s">"Import"</span>, <span class="s">"Vessel"</span>, <span class="n">1</span>),
+    (<span class="s">"IM_MT"</span>,     <span class="n">None</span>, <span class="s">"Import"</span>, <span class="s">"Vessel"</span>, <span class="n">0</span>),
+    (<span class="s">"EX_FULL40"</span>, <span class="n">2</span>, <span class="s">"Export"</span>, <span class="s">"Vessel"</span>, <span class="n">1</span>),
+    (<span class="s">"RAIL_IM20"</span>, <span class="n">1</span>, <span class="s">"Import"</span>, <span class="s">"Rail"</span>,   <span class="n">0</span>),
+    <span class="c"># ... nine columns in total</span>
+]
+
+<span class="k">def</span> <span class="f">map_row</span>(detail) -&gt; MappedVoyage:
+    voyage = MappedVoyage(file_id=detail.FileId, voyage=detail.VOYAGE, ...)
+    <span class="k">for</span> column, equip, direction, mode, loaded <span class="k">in</span> GPA_COLUMN_MAP:
+        containers = getattr(detail, column)
+        <span class="k">if</span> containers <span class="k">is</span> <span class="n">None</span>:
+            <span class="k">continue</span>            <span class="c"># empty column -&gt; no VoyageDetails row</span>
+        voyage.details.append(MappedDetail(equip, mode, direction, loaded, containers))
+    <span class="k">return</span> voyage</pre>
+    </figure>
+
+    <div class="prose">
+      <p><strong>The writer</strong> consumes that source-agnostic result and persists it through the voyage repositories, in two steps so the runner can commit them separately.</p>
+    </div>
+    <figure class="code">
+      <div class="code-head"><span>processing/writer.py</span><span class="path">VoyageWriter</span></div>
+<pre><span class="k">def</span> <span class="f">write_voyage</span>(self, mapped) -&gt; Voyage:      <span class="c"># phase 1: voyage only</span>
+    <span class="k">return</span> self._replace_or_add_voyage(mapped)
+
+<span class="k">def</span> <span class="f">write_details</span>(self, mapped, voyage) -&gt; None:  <span class="c"># phase 2: its detail rows</span>
+    self.details.add_all([
+        VoyageDetails(VoyageId=voyage.VoyageId, Containers=d.containers,
+                      ModeId=self.mode_ids[d.mode_name], ...)
+        <span class="k">for</span> d <span class="k">in</span> mapped.details
+    ])</pre>
+    </figure>
+
+    <div class="prose">
+      <p><strong>The runner</strong> owns the transaction. It writes every voyage, commits, marks the file at status&nbsp;3, then writes every detail in a single commit and marks status&nbsp;4. A user stop is caught apart from a real failure — the former resumes, the latter is logged and marked <code>ERROR</code>.</p>
+    </div>
+    <figure class="code">
+      <div class="code-head"><span>processing/runner.py</span><span class="path">process_file · two-phase commit</span></div>
+<pre>voyages = [writer.write_voyage(m) <span class="k">for</span> m <span class="k">in</span> mapped]
+file.LoadStatusId = LoadStatus.INSERTED_INTO_VOYAGE       <span class="c"># 3</span>
+session.commit()
+
+<span class="k">for</span> m, voyage <span class="k">in</span> zip(mapped, voyages):
+    writer.write_details(m, voyage)
+file.LoadStatusId = LoadStatus.INSERTED_INTO_VOYAGE_DETAIL <span class="c"># 4</span>
+session.commit()
+<span class="c"># KeyboardInterrupt -&gt; rollback, print "user requested stop", keep status</span>
+<span class="c"># Exception       -&gt; rollback, status 5 (ERROR), log to Process_Log_Error_tbl</span></pre>
+    </figure>
+  </section>
+
+  <!-- ================= 3. WORKED EXAMPLE ================= -->
+  <section>
+    <div class="sec-head"><span class="sec-no">03</span><h2>A worked example, end to end</h2></div>
+
+    <div class="prose">
+      <p><strong>We have file 1 with this data.</strong> A daily GPA export named <code>GPA_20250918.csv</code> arrives with one vessel call in it:</p>
+    </div>
+    <figure class="code">
+      <div class="code-head"><span>GPA_20250918.csv</span><span class="path">one row</span></div>
+<pre>TERMINAL,WORK_DATE,VESSEL,VOYAGE,LINE,...,IM_FULL20,IM_FULL40,IM_FULL45,IM_MT,EX_FULL20,EX_FULL40,EX_MT,RAIL_IM20,RAIL_IM40
+GCT,20250918,MSC LORETO,ML538W,MSC,...,120,340,15,60,80,210,45,30,25</pre>
+    </figure>
+
+    <div class="prose">
+      <p><strong>We insert it with this code.</strong> The prefix <code>GPA</code> resolves the file type, which selects the reader and loader. The reader returns one dict; the loader coerces and builds a model; the runner wraps the whole thing in one transaction:</p>
+    </div>
+    <figure class="code">
+      <div class="code-head"><span>ingestion/runner.py</span><span class="path">run() · one transaction per file</span></div>
+<pre>reader_cls, loader_cls = get_handlers(file_type_id)   <span class="c"># GPA -&gt; (GpaReader, GpaLoader)</span>
+rows = reader_cls().read(path)                        <span class="c"># [ {TERMINAL: "GCT", ...} ]</span>
+
+file = File(FileName=file_name, FileTypeId=file_type_id,
+            LoadStatusId=LoadStatus.INSERTED_INTO_FILE)
+FileRepository(session).add(file)                     <span class="c"># flush -&gt; file.FileId assigned</span>
+loader_cls().load(session, file.FileId, rows)         <span class="c"># staging rows reference that id</span>
+file.LoadStatusId = LoadStatus.INSERTED_INTO_FILE_DETAIL
+session.commit()                                      <span class="c"># File + detail committed together</span></pre>
+    </figure>
+
+    <div class="prose"><p>After ingestion, two staging rows exist — the file's identity, and its raw content:</p></div>
+
+    <div class="figtable scroll">
+      <table>
+        <caption>DemandForecast.File_tbl</caption>
+        <thead><tr><th>FileId</th><th>FileName</th><th>FileTypeId</th><th>LoadStatusId</th></tr></thead>
+        <tbody><tr><td class="num">501</td><td>GPA_20250918.csv</td><td class="num">1</td><td class="num">2</td></tr></tbody>
+      </table>
+    </div>
+    <div class="figtable scroll">
+      <table>
+        <caption>DemandForecast.GpaFileDetail_tbl (raw, verbatim)</caption>
+        <thead><tr><th>FileId</th><th>VOYAGE</th><th>WORK_DATE</th><th>IM_FULL20</th><th>IM_FULL40</th><th>IM_FULL45</th><th>IM_MT</th><th>EX_FULL20</th><th>EX_FULL40</th><th>EX_MT</th><th>RAIL_IM20</th><th>RAIL_IM40</th></tr></thead>
+        <tbody><tr><td class="num">501</td><td>ML538W</td><td>2025-09-18</td><td class="num">120</td><td class="num">340</td><td class="num">15</td><td class="num">60</td><td class="num">80</td><td class="num">210</td><td class="num">45</td><td class="num">30</td><td class="num">25</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="prose">
+      <p>Then processing runs. The mapper reads that one wide row and <strong>unpivots</strong> it: every non-empty container column becomes its own <code>VoyageDetails</code> row, tagged with direction, mode, equipment size, and a loaded flag. One staging row fans out into nine movement rows under a single voyage:</p>
+    </div>
+
+    <div class="unpivot">
+      <div class="source-row">
+        <div class="rh">1 staging row · ML538W</div>
+        <div class="cols">
+          <div class="col imp"><div class="cn">IM_FULL20</div><div class="cv">120</div></div>
+          <div class="col imp"><div class="cn">IM_FULL40</div><div class="cv">340</div></div>
+          <div class="col imp"><div class="cn">IM_FULL45</div><div class="cv">15</div></div>
+          <div class="col imp mt"><div class="cn">IM_MT</div><div class="cv">60</div></div>
+          <div class="col exp"><div class="cn">EX_FULL20</div><div class="cv">80</div></div>
+          <div class="col exp"><div class="cn">EX_FULL40</div><div class="cv">210</div></div>
+          <div class="col exp mt"><div class="cn">EX_MT</div><div class="cv">45</div></div>
+          <div class="col rail"><div class="cn">RAIL_IM20</div><div class="cv">30</div></div>
+          <div class="col rail"><div class="cn">RAIL_IM40</div><div class="cv">25</div></div>
+        </div>
+      </div>
+      <div class="fan">→</div>
+      <div class="details-stack">
+        <div class="drow"><span class="pill imp">Imp</span><span>Vessel</span><span>20ft</span><span>full</span><span class="qty">120</span></div>
+        <div class="drow"><span class="pill imp">Imp</span><span>Vessel</span><span>40ft</span><span>full</span><span class="qty">340</span></div>
+        <div class="drow"><span class="pill imp">Imp</span><span>Vessel</span><span>45ft</span><span>full</span><span class="qty">15</span></div>
+        <div class="drow"><span class="pill imp">Imp</span><span>Vessel</span><span>—</span><span>empty</span><span class="qty">60</span></div>
+        <div class="drow"><span class="pill exp">Exp</span><span>Vessel</span><span>20ft</span><span>full</span><span class="qty">80</span></div>
+        <div class="drow"><span class="pill exp">Exp</span><span>Vessel</span><span>40ft</span><span>full</span><span class="qty">210</span></div>
+        <div class="drow"><span class="pill exp">Exp</span><span>Vessel</span><span>—</span><span>empty</span><span class="qty">45</span></div>
+        <div class="drow"><span class="pill rail">Imp</span><span>Rail</span><span>20ft</span><span>empty</span><span class="qty">30</span></div>
+        <div class="drow"><span class="pill rail">Imp</span><span>Rail</span><span>40ft</span><span>empty</span><span class="qty">25</span></div>
+      </div>
+    </div>
+
+    <div class="prose">
+      <p>The writer inserts the <code>Voyage</code> first (status&nbsp;→&nbsp;3), then all nine <code>VoyageDetails</code> in one commit (status&nbsp;→&nbsp;4). The mode and direction <em>names</em> the mapper produced are resolved to ids through lookup maps — so <code>"Vessel"</code> becomes a <code>ModeId</code> without a per-row database hit.</p>
+    </div>
+
+    <div class="figtable scroll">
+      <table>
+        <caption>DemandForecast.Voyage_tbl</caption>
+        <thead><tr><th>VoyageId</th><th>FileId</th><th>Voyage</th><th>WORK_DATE</th></tr></thead>
+        <tbody><tr><td class="num">7012</td><td class="num">501</td><td>ML538W</td><td>2025-09-18</td></tr></tbody>
+      </table>
+    </div>
+    <div class="figtable scroll">
+      <table>
+        <caption>DemandForecast.VoyageDetails_tbl (first rows)</caption>
+        <thead><tr><th>VoyageId</th><th>DirectionId</th><th>ModeId</th><th>EquipTypeId</th><th>ContainerLoadedFlag</th><th>Containers</th></tr></thead>
+        <tbody>
+          <tr><td class="num">7012</td><td>Import</td><td>Vessel</td><td class="num">1</td><td>1</td><td class="num">120</td></tr>
+          <tr><td class="num">7012</td><td>Import</td><td>Vessel</td><td class="num">2</td><td>1</td><td class="num">340</td></tr>
+          <tr><td class="num">7012</td><td>Export</td><td>Vessel</td><td class="num">2</td><td>1</td><td class="num">210</td></tr>
+          <tr><td class="num">7012</td><td>Import</td><td>Rail</td><td class="num">1</td><td>0</td><td class="num">30</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ================= 4. WHY ================= -->
+  <section>
+    <div class="sec-head"><span class="sec-no">04</span><h2>Why models &amp; repositories, not pure SQL inserts</h2></div>
+
+    <div class="prose">
+      <p>The same File insert could be a raw <code>INSERT</code>. Follow that path step by step with our example and the hidden costs surface. Here is the hand-written version:</p>
+    </div>
+
+    <div class="two-col">
+      <figure class="code">
+        <div class="code-head"><span>the pure-SQL way</span><span class="path">what you hand-write</span></div>
+<pre><span class="c">-- 1. insert the file, then dig the identity back out</span>
+INSERT INTO DemandForecast.File_tbl
+  (FileName, FileTypeId, LoadStatusId)
+VALUES (<span class="s">'GPA_20250918.csv'</span>, <span class="n">1</span>, <span class="n">1</span>);
+SET @FileId = SCOPE_IDENTITY();
+
+<span class="c">-- 2. now thread @FileId + hand-format every value</span>
+INSERT INTO DemandForecast.GpaFileDetail_tbl
+  (FileId, VOYAGE, WORK_DATE, IM_FULL20, ...)
+VALUES (@FileId, <span class="s">'ML538W'</span>, <span class="s">'2025-09-18'</span>, <span class="n">120</span>, ...);
+
+<span class="c">-- 3. remember BEGIN/COMMIT/ROLLBACK yourself,</span>
+<span class="c">--    and the ERROR row on failure, every time.</span></pre>
+      </figure>
+      <figure class="code">
+        <div class="code-head"><span>the model &amp; repository way</span><span class="path">what the pipeline does</span></div>
+<pre>file = File(
+    FileName=name, FileTypeId=<span class="n">1</span>,
+    LoadStatusId=LoadStatus.INSERTED_INTO_FILE,
+)
+FileRepository(session).add(file)   <span class="c"># flush -&gt; FileId</span>
+
+loader.load(session, file.FileId, rows)
+
+file.LoadStatusId = LoadStatus.INSERTED_INTO_FILE_DETAIL
+session.commit()                    <span class="c"># all-or-nothing</span></pre>
+      </figure>
+    </div>
+
+    <div class="reasons">
+      <div class="reason"><div class="rn">1</div><div>
+        <strong>Identity is handed to you.</strong>
+        <p><code>add()</code> flushes and fills <code>file.FileId</code> in Python, so the staging rows and voyages reference it directly. In raw SQL you juggle <code>SCOPE_IDENTITY()</code> / <code>OUTPUT</code> and thread the id by hand across every dependent table.</p>
+      </div></div>
+      <div class="reason"><div class="rn">2</div><div>
+        <strong>Type coercion lives in one place.</strong>
+        <p>The loader converts <code>"20250918"</code> to a real <code>date</code> and blanks to <code>None</code> once, in <code>_date</code> / <code>_int</code>. Raw SQL scatters formatting across every statement and string-builds values — which is also where SQL injection creeps in.</p>
+      </div></div>
+      <div class="reason"><div class="rn">3</div><div>
+        <strong>One unit of work, one transaction.</strong>
+        <p>The session commits the <code>File</code> row and all its details together, or rolls back and records an <code>ERROR</code> row. That "commit all or fail cleanly" rule is written once in the runner, not repeated as manual <code>BEGIN TRAN</code> blocks.</p>
+      </div></div>
+      <div class="reason"><div class="rn">4</div><div>
+        <strong>Parameters are bound, not interpolated.</strong>
+        <p>Every value goes to the driver as a bound parameter. A voyage code with an apostrophe, or an odd terminal name, can never break — or rewrite — a statement.</p>
+      </div></div>
+      <div class="reason"><div class="rn">5</div><div>
+        <strong>New file types cost no core changes.</strong>
+        <p>Adding NCSPA means a new reader, loader, and mapper registered in a dictionary. The runner, writer, and base repository are reused untouched — the shape that raw, per-table SQL cannot give you without copy-paste.</p>
+      </div></div>
+      <div class="reason"><div class="rn">6</div><div>
+        <strong>Business rules stay centralised.</strong>
+        <p>Reprocessing a voyage — replace it, archive the old version to history, re-insert details — lives once in <code>_replace_or_add_voyage</code>. In raw SQL that check-update-delete-reinsert dance would be duplicated at every call site.</p>
+      </div></div>
+      <div class="reason"><div class="rn">7</div><div>
+        <strong>The schema has one source of truth.</strong>
+        <p>Models reflect the live tables, so a renamed column is fixed in one model, not hunted through dozens of scattered SQL strings. Database-first still holds: the code reflects the schema, it never creates or alters it.</p>
+      </div></div>
+    </div>
+
+    <div class="callout">
+      <strong>The trade in one line:</strong> raw SQL is fewer characters for the very first insert, and more characters — plus more risk — for every insert, table, and file type after it. Models and repositories pay a small upfront cost to make each following step boring and safe.</div>
+  </section>
+
+  <hr class="rule">
+  <footer>
+    <div>DemandForecast · modular monolith · ingestion → processing → (future) forecasting</div>
+    <div class="cmds">
+      <code>forecast ingest-folder --type GPA</code>
+      <code>forecast process-pending</code>
+      <code>forecast import-status</code>
+    </div>
+  </footer>
+
+</div>
+</div>
+</body></html>
