@@ -3,8 +3,10 @@
  Goldilocks - Write Surface migration 02: usp_register_model versioning
 ================================================================================
  Supersedes the usp_register_model body defined in 01_types_and_procs.sql.
- Apply AFTER 01 (it depends on the CoefficientRow / MetricRow TVP types, which
- are unchanged here). CREATE OR ALTER keeps this idempotent and re-runnable.
+ Apply AFTER 01 (it depends on the dbo.CoefficientRow / dbo.MetricRow TVP types,
+ which are unchanged here beyond living in dbo now - see 01's header for why the
+ TVP types are in dbo rather than DemandForecast). CREATE OR ALTER keeps this
+ idempotent and re-runnable.
 
  Why this exists:
    Model-version assignment must be atomic with the insert. Computing
@@ -32,8 +34,8 @@
 CREATE OR ALTER PROCEDURE DemandForecast.usp_register_model
     @model_name             NVARCHAR(150),
     @target_feature_id      INT,
-    @coefficients           DemandForecast.CoefficientRow READONLY,
-    @metrics                DemandForecast.MetricRow      READONLY,
+    @coefficients           dbo.CoefficientRow READONLY,
+    @metrics                dbo.MetricRow      READONLY,
     @modified_by            NVARCHAR(128),
     @model_version          INT       = NULL,   -- NULL => next version for @model_name
     @trained_date           DATETIME2 = NULL,
