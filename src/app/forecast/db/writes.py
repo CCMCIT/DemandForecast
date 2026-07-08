@@ -7,6 +7,12 @@ numpy/pandas produce never silently degrades DECIMAL(18,8) on the way in.
 
 The write surface is deliberately tiny and stable. Do NOT add write helpers
 here that bypass a proc - that is exactly how the hybrid rots.
+
+pyodbc TVP note: pyodbc sizes a TVP's numeric column from the FIRST row's Decimal
+(precision + scale), and every later row must fit that binding. A column whose
+first value is < 1 (no integer digits) gets sized too narrow and raises DataError
+22003 ("Numeric value out of range") on the first later row that has an integer
+part. Keep that in mind for any TVP column whose leading row can be a fraction.
 """
 from __future__ import annotations
 
@@ -98,13 +104,23 @@ class WriteGateway:
 
         Returns {"model_id": int, "model_version": int}.
         """
+        # Coefficients stay Decimal: they are the DECIMAL(18,8) values the model
+        # is reconstructed/inspected from, and the intercept (first row) is wide
+        # enough to size the TVP's numeric columns correctly.
         coef_rows = [
             (int(r.feature_id), _dec(r.coefficient_value, _SCALE_8),
              _dec(r.std_error, _SCALE_8), _dec(r.p_value, _SCALE_8))
             for r in coefficients.itertuples(index=False)
         ]
+        # metric_value binds as float, NOT Decimal. metric_frame leads with
+        # r_squared (< 1), so a Decimal binding would size this TVP column
+        # NUMERIC(<=6,6) off that first row and then overflow on the first metric
+        # with an integer part (rmse, f_statistic, aic, ...), raising pyodbc
+        # DataError 22003. Metrics are analysis-grade diagnostics stored as
+        # DECIMAL(18,6); binding float makes pyodbc use SQL_DOUBLE and lets SQL
+        # Server coerce to the column scale with no client-side precision guess.
         metric_rows = [
-            (str(r.metric_name), _dec(r.metric_value, _SCALE_6))
+            (str(r.metric_name), float(r.metric_value))
             for r in metrics.itertuples(index=False)
         ]
         sql = "{CALL DemandForecast.usp_register_model (?, ?, ?, ?, ?, ?, ?, ?, ?)}"
