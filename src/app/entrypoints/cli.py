@@ -7,14 +7,17 @@ by a worker or API entrypoint without change. Commands:
   ingest          --path <file> --type <FileType>   file on disk -> File_tbl + detail table
   ingest-folder   --type <FileType> [--folder <dir>] every file in a folder -> File_tbl + detail table
   process         --file-id <id>                    one loaded file -> Voyage_tbl + VoyageDetails_tbl
+  process-next    --count <n>                       the next n pending files -> Voyage(+Details)
   process-pending                                   every file with LoadStatusId=2 -> Voyage(+Details)
 
-The numbered listing shown by `--help` is generated from _COMMANDS below.
+Every command also accepts --env <dev|uat|prod> to pick the target database
+(default: dev). The numbered listing shown by `--help` is generated from _COMMANDS.
 """
 import argparse
 import sys
 
-from app.config.settings import EXCEL_WATCH_FOLDER
+from app.config.settings import EXCEL_WATCH_FOLDER, Env, DEFAULT_ENV
+from app.db import session as db_session
 from app.lookups import FileType
 from app.ingestion import runner as ingestion_runner
 from app.processing import runner as processing_runner
@@ -35,6 +38,10 @@ _COMMANDS = {
         "Map one loaded file into Voyage_tbl and VoyageDetails_tbl.",
         "python run.py process --file-id 123",
     ),
+    "process-next": (
+        "Process the next N pending files (LoadStatusId 3 then 2).",
+        "python run.py process-next --count 5",
+    ),
     "process-pending": (
         "Process every file with LoadStatusId=2 (Inserted into FileDetail).",
         "python run.py process-pending",
@@ -47,22 +54,30 @@ _COMMANDS = {
 
 
 def _commands_help() -> str:
-    """Numbered command list for the top-level --help, one blank row between."""
+    """Numbered command list for the top-level --help, one blank row between,
+    followed by the global options shared by every command."""
     lines = ["commands:", ""]
     for number, (name, (description, example)) in enumerate(_COMMANDS.items(), start=1):
         lines.append(f"  {number}. {name}")
         lines.append(f"       {description}")
         lines.append(f"       Eg: {example}")
         lines.append("")
+    lines.append("global options (every command):")
+    lines.append("")
+    lines.append("  --env dev|uat|prod   Target database environment (default: dev).")
+    lines.append("       Eg: python run.py process --env uat --file-id 123")
+    lines.append("")
     return "\n".join(lines)
 
 
-def _add_command(sub, name: str):
+def _add_command(sub, name: str, parents=()):
     """Add a subparser hidden from the default list (we render our own), but
-    still self-documenting via `run.py <name> --help`."""
+    still self-documenting via `run.py <name> --help`. `parents` shares common
+    options (e.g. --env) across every command."""
     description, example = _COMMANDS[name]
     return sub.add_parser(
         name,
+        parents=list(parents),
         help=argparse.SUPPRESS,
         description=f"{description}\n\nEg: {example}",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -82,7 +97,16 @@ def main(argv=None) -> None:
         dest="command", required=True, metavar="<command>", help=argparse.SUPPRESS
     )
 
-    ingest = _add_command(sub, "ingest")
+    # Shared across every command: which database to hit. Default dev.
+    common = argparse.ArgumentParser(add_help=False)
+    common.add_argument(
+        "--env",
+        choices=[e.value for e in Env],
+        default=DEFAULT_ENV.value,
+        help="Database environment: dev, uat or prod (default: dev).",
+    )
+
+    ingest = _add_command(sub, "ingest", parents=[common])
     ingest.add_argument("--path", required=True, help="Path to the source file")
     ingest.add_argument(
         "--type",
@@ -92,7 +116,7 @@ def main(argv=None) -> None:
         help="FileType, e.g. GPA",
     )
 
-    ingest_folder = _add_command(sub, "ingest-folder")
+    ingest_folder = _add_command(sub, "ingest-folder", parents=[common])
     ingest_folder.add_argument(
         "--type",
         required=True,
@@ -106,11 +130,17 @@ def main(argv=None) -> None:
         help="Source directory. Defaults to EXCEL_WATCH_FOLDER from .env.",
     )
 
-    process = _add_command(sub, "process")
+    process = _add_command(sub, "process", parents=[common])
     process.add_argument("--file-id", required=True, type=int, dest="file_id", help="FileId to process")
 
-    _add_command(sub, "process-pending")
-    _add_command(sub, "import-status")
+    process_next = _add_command(sub, "process-next", parents=[common])
+    process_next.add_argument(
+        "--count", required=True, type=int, dest="count",
+        help="How many of the next pending files to process",
+    )
+
+    _add_command(sub, "process-pending", parents=[common])
+    _add_command(sub, "import-status", parents=[common])
 
     args = parser.parse_args(argv)
 
@@ -133,13 +163,17 @@ _START_MESSAGES = {
     "ingest": "Loading...",
     "ingest-folder": "Loading...",
     "process": "Processing...",
+    "process-next": "Processing...",
     "process-pending": "Processing...",
     "import-status": "Checking...",
 }
 
 
 def run_command(args) -> None:
-    print(_START_MESSAGES.get(args.command, "Working..."))
+    # Bind the DB engine to the chosen environment before any DB work.
+    env = Env(args.env)
+    db_session.configure(env)
+    print(f"{_START_MESSAGES.get(args.command, 'Working...')} (env={env.value})")
 
     if args.command == "ingest":
         file_type_id = FileType[args.file_type]
@@ -158,6 +192,14 @@ def run_command(args) -> None:
     elif args.command == "process":
         count = processing_runner.process_file(args.file_id)
         print(f"Processed {count} detail row(s) for FileId={args.file_id}")
+    elif args.command == "process-next":
+        result = processing_runner.process_next(args.count, progress=_print_progress)
+        print(
+            f"Next {args.count} run complete. "
+            f"processed={len(result['processed'])} "
+            f"skipped={len(result['skipped'])} "
+            f"failed={len(result['failed'])}"
+        )
     elif args.command == "process-pending":
         result = processing_runner.process_pending(progress=_print_progress)
         print(
