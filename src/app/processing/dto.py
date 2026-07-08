@@ -17,9 +17,18 @@ class MappedDetail:
 
 
 @dataclass
+class MappedField:
+    """One typed descriptive value of a voyage (e.g. Vessel = 'MSC ISABELLA').
+    Source-agnostic: any source maps its columns to these, the writer persists them."""
+    field_type_id: int
+    value: str
+
+
+@dataclass
 class MappedVoyage:
     file_id: int
     voyage: str
     work_date: date | None
     work_time: time | None
     details: list[MappedDetail] = field(default_factory=list)
+    fields: list[MappedField] = field(default_factory=list)

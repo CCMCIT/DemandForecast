@@ -25,3 +25,13 @@ class VoyageStatus(IntEnum):
     TO_CALL = 1     # on the current report
     CALLED = 2      # fell off the report and was assessed as called
     CANCELLED = 3   # fell off the report and was assessed as cancelled
+
+
+class FieldType(IntEnum):
+    EQUIPMENT_TYPE = 1
+    VESSEL = 2
+    OCEAN_CARRIER = 3
+    SERVICE = 4
+    LOCATION = 5
+    ORIGIN_PORT = 6
+    DESTINATION_PORT = 7   # DB spells this 'Destinatino Port' (typo kept in the data)

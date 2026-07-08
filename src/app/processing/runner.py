@@ -16,6 +16,7 @@ real exception rolls back, sets ERROR (5), and logs to Process_Log_Error_tbl.
 - process_file(file_id): process one file across both phases.
 - process_pending(): process every file at INSERTED_INTO_FILE_DETAIL (2, new) or
   INSERTED_INTO_VOYAGE (3, resume), skipping types with no processor yet.
+- process_next(count): process the next `count` pending files (same order).
 """
 from app.lookups import LoadStatus
 from app.db.session import SessionLocal, session_scope
@@ -55,11 +56,12 @@ def process_file(file_id: int) -> int:
         file.LoadStatusId = LoadStatus.INSERTED_INTO_VOYAGE
         session.commit()
 
-        # Phase 2: all details in a single transaction. If it is interrupted the
-        # rollback leaves zero details, so the file stays at status 3 and phase 2
-        # is safely re-run next time.
+        # Phase 2: all details and field maps in a single transaction. If it is
+        # interrupted the rollback leaves zero of both, so the file stays at status
+        # 3 and phase 2 is safely re-run next time.
         for m, voyage in zip(mapped, voyages):
             writer.write_details(m, voyage)
+            writer.write_fields(m, voyage)
         file.LoadStatusId = LoadStatus.INSERTED_INTO_VOYAGE_DETAIL
         session.commit()
 
@@ -83,10 +85,13 @@ def process_file(file_id: int) -> int:
         session.close()
 
 
-def process_pending(progress=None) -> dict:
-    """Process every pending file. Optional `progress(event, **data)` callback
-    is fired for live reporting: 'start' (total), then 'processing'/'processed'/
-    'skipped'/'failed' per file. The runner does no printing itself."""
+def process_pending(progress=None, limit=None) -> dict:
+    """Process pending files. Optional `progress(event, **data)` callback is fired
+    for live reporting: 'start' (total), then 'processing'/'processed'/'skipped'/
+    'failed' per file. The runner does no printing itself.
+
+    `limit` caps how many files are taken (the first N in priority order); None
+    means all. process_next is the named entry point for the "next N files" case."""
     with session_scope() as session:
         repo = FileRepository(session)
         # Status 3 first: finish files whose voyages are in but details are not,
@@ -94,6 +99,8 @@ def process_pending(progress=None) -> dict:
         files = repo.get_by_load_status(LoadStatus.INSERTED_INTO_VOYAGE) + \
             repo.get_by_load_status(LoadStatus.INSERTED_INTO_FILE_DETAIL)
         targets = [(f.FileId, f.FileTypeId) for f in files]
+        if limit is not None:
+            targets = targets[:limit]  # the next N in priority order
 
     _report(progress, "start", total=len(targets))
 
@@ -112,6 +119,14 @@ def process_pending(progress=None) -> dict:
             failed.append((file_id, str(exc)))
             _report(progress, "failed", file_id=file_id, error=str(exc))
     return {"processed": processed, "skipped": skipped, "failed": failed}
+
+
+def process_next(count: int, progress=None) -> dict:
+    """Process the next `count` pending files, in the same priority order as
+    process_pending (status 3 before status 2). A thin cap over process_pending;
+    files whose type has no processor still count toward `count` (reported as
+    skipped)."""
+    return process_pending(progress=progress, limit=count)
 
 
 def _classify_fallen_off(session, in_file_voyages, detail_repo_cls, file_id) -> None:
