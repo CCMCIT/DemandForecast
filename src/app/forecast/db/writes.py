@@ -84,11 +84,20 @@ class WriteGateway:
         coefficients: pd.DataFrame,  # feature_id, coefficient_value, std_error, p_value
         metrics: pd.DataFrame,       # metric_name, metric_value
         modified_by: str,
-        model_version: int = 1,
+        model_version: int | None = None,   # None => proc assigns the next version
         trained_date=None,
         is_active: bool = False,
-    ) -> int:
-        """Persist a trained model (registry + coefficients + metrics). Returns model_id."""
+        retire_previous_active: bool = False,
+    ) -> dict:
+        """Persist a trained model (registry + coefficients + metrics).
+
+        model_version=None lets usp_register_model assign the next version for
+        model_name inside its own transaction (race-safe against the UNIQUE
+        guard). retire_previous_active=True, together with is_active=True, also
+        deactivates other active versions of this same model_name.
+
+        Returns {"model_id": int, "model_version": int}.
+        """
         coef_rows = [
             (int(r.feature_id), _dec(r.coefficient_value, _SCALE_8),
              _dec(r.std_error, _SCALE_8), _dec(r.p_value, _SCALE_8))
@@ -98,12 +107,13 @@ class WriteGateway:
             (str(r.metric_name), _dec(r.metric_value, _SCALE_6))
             for r in metrics.itertuples(index=False)
         ]
-        sql = "{CALL DemandForecast.usp_register_model (?, ?, ?, ?, ?, ?, ?, ?)}"
+        sql = "{CALL DemandForecast.usp_register_model (?, ?, ?, ?, ?, ?, ?, ?, ?)}"
         params = [model_name, target_feature_id, coef_rows, metric_rows,
                   modified_by, model_version,
                   _as_date(trained_date) if trained_date is not None else None,
-                  int(is_active)]
-        return int(self._call_scalar(sql, params))
+                  int(is_active), int(retire_previous_active)]
+        row = self._call_row(sql, params)
+        return {"model_id": int(row[0]), "model_version": int(row[1])}
 
     # -- raw proc plumbing -------------------------------------------------
 
@@ -124,5 +134,18 @@ class WriteGateway:
             value = cursor.fetchone()[0]
             raw.commit()
             return value
+        finally:
+            raw.close()
+
+    def _call_row(self, sql: str, params: list):
+        """Like _call_scalar but returns the whole first row (e.g. a proc that
+        hands back model_id AND model_version)."""
+        raw = self._engine.raw_connection()
+        try:
+            cursor = raw.cursor()
+            cursor.execute(sql, params)
+            row = cursor.fetchone()
+            raw.commit()
+            return row
         finally:
             raw.close()
