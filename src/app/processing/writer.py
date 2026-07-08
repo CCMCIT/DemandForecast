@@ -8,8 +8,12 @@ lookup maps passed in once per run, so no per-row DB hits.
 """
 from app.db.models.voyage import Voyage
 from app.db.models.voyage_details import VoyageDetails
+from app.db.models.voyage_field_map import VoyageFieldMap
 from app.db.repositories.voyage_repository import VoyageRepository
 from app.db.repositories.voyage_details_repository import VoyageDetailsRepository
+from app.db.repositories.field_value_repository import FieldValueRepository
+from app.db.repositories.field_type_value_repository import FieldTypeValueRepository
+from app.db.repositories.voyage_field_map_repository import VoyageFieldMapRepository
 from app.lookups import VoyageStatus
 from app.processing.dto import MappedVoyage
 
@@ -19,6 +23,10 @@ class VoyageWriter:
         self.session = session
         self.voyages = VoyageRepository(session)
         self.details = VoyageDetailsRepository(session)
+        # Shared dimension repos preload their caches once per file (one query each).
+        self.field_values = FieldValueRepository(session)
+        self.field_type_values = FieldTypeValueRepository(session)
+        self.field_maps = VoyageFieldMapRepository(session)
         self.mode_ids = mode_ids
         self.direction_ids = direction_ids
 
@@ -46,6 +54,28 @@ class VoyageWriter:
                 for d in mapped.details
             ]
         )
+
+    def write_fields(self, mapped: MappedVoyage, voyage: Voyage) -> None:
+        """Phase 2: (re)write the voyage's field maps.
+
+        FieldValue and FieldTypeValue are shared dimension rows -- get-or-create,
+        never deleted. VoyageFieldMap is per-voyage: delete-and-reinsert keyed by
+        VoyageId (mirrors write_details), so reprocessing a file overwrites cleanly.
+        """
+        self.field_maps.delete_by_voyage_id(voyage.VoyageId)
+        maps = []
+        for f in mapped.fields:
+            field_value_id = self.field_values.get_or_create_id(f.value)
+            field_type_value_id = self.field_type_values.get_or_create_id(
+                f.field_type_id, field_value_id
+            )
+            maps.append(
+                VoyageFieldMap(
+                    VoyageId=voyage.VoyageId,
+                    FieldTypeValueId=field_type_value_id,
+                )
+            )
+        self.field_maps.add_all(maps)
 
     def _replace_or_add_voyage(self, mapped: MappedVoyage) -> Voyage:
         """Insert the voyage, or replace it if it already exists.

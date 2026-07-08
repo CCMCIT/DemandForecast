@@ -5,14 +5,19 @@ Ingest daily files into staging tables, then process them into voyage tables.
 Future: forecasting on this data.
 
 - Phase 1a — Ingestion: read a file, write `File_tbl` + `GpaFileDetail_tbl`.
-- Phase 1b — Processing: read `GpaFileDetail_tbl`, write `Voyage_tbl` + `VoyageDetails_tbl`.
-- File type detected by filename prefix (`GPA`). One format per type.
+- Phase 1b — Processing: read `GpaFileDetail_tbl`, write `Voyage_tbl` + `VoyageDetails_tbl`,
+  plus the field-mapping tables `FieldValue_tbl` -> `FieldTypeValue_tbl` -> `VoyageFieldMap_tbl`
+  (the voyage's Vessel / Ocean Carrier / Service / Location / Origin / Destination values).
+- File type is chosen per file (CLI `--type`, e.g. `GPA`) and drives the reader/mapper via
+  explicit registries. One format per type.
 - Many voyages per file.
 - Unpivot: each container-type column (`IM_FULL20`, `IM_FULL40`, ...) becomes one `VoyageDetails` row.
 
 ## Database
 - Engine: MS SQL Server. Driver: `pyodbc`.
 - Schema: `DemandForecast`.
+- Three environments (dev / uat / prod), each a `DB_CONNECTION_STRING_*` in `.env`. Pick per run
+  with the CLI `--env` flag (default `dev`); see `config/settings.py` + `db/session.py`.
 - **Database-first. Code NEVER creates or alters tables. No `CREATE TABLE`. No migrations. No Alembic.**
 - Models reflect existing tables only.
 - For new tables: generate/reflect from the live DB. Do not hand-invent columns.
@@ -26,108 +31,134 @@ Future: forecasting on this data.
 - File formats: CSV and Excel. Parsing: `pandas` + `openpyxl`.
 - Tests: `pytest`.
 
-## Folder structure (fixed — do not reshape)
+## Folder structure
 ```
 project/
-├── src/
+├── run.py                           # entry point: `python run.py <command> [--env dev|uat|prod]`
+├── requirements.txt                 # sqlalchemy, pyodbc, pandas, openpyxl, python-dotenv, pytest
+├── pytest.ini                       # markers (unit / integration); pythonpath = src
+├── .env                             # DB_CONNECTION_STRING_{DEV,UAT,PROD}, EXCEL_WATCH_FOLDER
+├── documentation/                   # schema diagram (.drawio/.png), data_pipeline.html, notes
+│
+├── src/app/
+│   ├── lookups.py                   # IntEnums mirroring DB lookups: FileType, LoadStatus, VoyageStatus, FieldType
+│   │
 │   ├── config/
-│   │   └── settings.py              # folder path, DB conn string, env
+│   │   └── settings.py              # .env loading; Env enum; connection_string(env); EXCEL_WATCH_FOLDER
 │   │
 │   ├── db/
-│   │   ├── base.py                  # declarative base
-│   │   └── session.py               # engine + session factory (unit of work)
-│   │
-│   ├── models/                      # sqlacodegen once, then manual; reflect existing tables only
-│   │   ├── file.py                  # File_tbl
-│   │   ├── gpa_file_detail.py       # GpaFileDetail_tbl
-│   │   ├── voyage.py                # Voyage_tbl
-│   │   ├── voyage_details.py        # VoyageDetails_tbl
-│   │   └── lookups.py               # Mode_tbl, Direction_tbl, FieldType*, etc.
-│   │
-│   ├── repositories/                # "writers" — DB access only
-│   │   ├── base_repository.py       # generic CRUD + bulk insert
-│   │   ├── file_repository.py
-│   │   ├── gpa_file_detail_repository.py
-│   │   ├── voyage_repository.py
-│   │   └── voyage_details_repository.py
-│   │
-│   ├── readers/                     # "readers" — file -> rows, no DB
-│   │   ├── base_reader.py           # abstract: read(path) -> list[dict]
-│   │   ├── gpa_reader.py            # CSV + Excel for GPA
-│   │   └── reader_factory.py        # file type -> reader
-│   │
-│   ├── filetype/
-│   │   └── resolver.py              # filename -> file type ("GPA" prefix)
+│   │   ├── session.py               # engine + session factory; configure(env) binds dev/uat/prod
+│   │   ├── models/                  # DB-first ORM models (reflect existing tables only)
+│   │   │   ├── base.py              # declarative base
+│   │   │   ├── file.py
+│   │   │   ├── gpa_file_detail.py
+│   │   │   ├── voyage.py
+│   │   │   ├── voyage_details.py
+│   │   │   ├── mode.py
+│   │   │   ├── direction.py
+│   │   │   ├── field_type.py
+│   │   │   ├── field_value.py
+│   │   │   ├── field_type_value.py
+│   │   │   ├── voyage_field_map.py
+│   │   │   └── process_log_error.py
+│   │   └── repositories/            # ALL DB access — one per table (+ the field-mapping ones)
+│   │       ├── file_repository.py
+│   │       ├── gpa_file_detail_repository.py
+│   │       ├── voyage_repository.py
+│   │       ├── voyage_details_repository.py
+│   │       ├── mode_repository.py
+│   │       ├── direction_repository.py
+│   │       ├── field_value_repository.py         # get-or-create + cache
+│   │       ├── field_type_value_repository.py    # get-or-create + cache
+│   │       ├── voyage_field_map_repository.py
+│   │       └── process_log_error_repository.py
 │   │
 │   ├── ingestion/                   # file -> File_tbl + <X>FileDetail_tbl
-│   │   └── ingestion_service.py
+│   │   ├── base.py                  # shared reader/loader contract
+│   │   ├── registry.py              # FileTypeId -> (reader, loader)  (explicit dict)
+│   │   ├── runner.py                # orchestration: single file + folder
+│   │   └── gpa/
+│   │       ├── reader.py            # file -> rows (CSV/Excel)
+│   │       └── loader.py            # rows -> File_tbl + GpaFileDetail_tbl
 │   │
-│   ├── processing/
-│   │   ├── base_processor.py        # abstract: detail rows -> voyages
-│   │   ├── gpa_processor.py         # group by voyage + unpivot columns
-│   │   ├── processor_factory.py     # file type -> processor
-│   │   └── mapping/                 # ISOLATED undefined rules
-│   │       ├── base_mapper.py       # column -> Mode/Direction/Loaded/Equip
-│   │       └── gpa_mapper.py        # stub until rules defined
+│   ├── processing/                  # detail rows -> Voyage + VoyageDetails + field maps
+│   │   ├── registry.py              # FileTypeId -> (detail repository, mapper)  (explicit dict)
+│   │   ├── dto.py                   # MappedVoyage / MappedDetail / MappedField (source-agnostic)
+│   │   ├── field_mapping.py         # build_fields(row, spec) -> MappedField[]  (shared helper)
+│   │   ├── writer.py                # MappedVoyage -> DB  (shared, source-agnostic)
+│   │   ├── runner.py                # two-phase orchestration: voyages, then details + fields
+│   │   ├── status.py                # fallen-off classification (Called / Cancelled)
+│   │   └── gpa/
+│   │       └── mapper.py            # GpaFileDetail row -> MappedVoyage  (the ONLY GPA-aware piece)
 │   │
-│   ├── pipelines/                   # thin orchestration
-│   │   ├── ingest_pipeline.py       # scan folder, read, ingest
-│   │   └── process_pipeline.py      # pick unprocessed, transform, write
+│   ├── forecast/                    # future forecasting; reads via repositories only
 │   │
-│   ├── analytics/                   # future forecasting; reads via repositories only
-│   │   └── .gitkeep
-│   │
-│   └── main.py                      # CLI entry point
+│   └── entrypoints/
+│       └── cli.py                   # argparse CLI; commands below, all accept --env
 │
-├── tests/
-│   ├── readers/
-│   ├── repositories/
-│   ├── processing/
-│   └── pipelines/
-│
-├── requirements.txt                 # sqlalchemy, pyodbc, pandas, openpyxl, pytest
-├── pyproject.toml
-└── README.md
+└── tests/
+    ├── integration/                 # hit the live DB (marker: integration)
+    ├── processing/                  # offline mapper tests (marker: unit)
+    └── unit/                        # offline tests (placeholder)
 ```
 
+CLI commands (`entrypoints/cli.py`): `ingest`, `ingest-folder`, `process`, `process-next`,
+`process-pending`, `import-status`. Every command takes `--env dev|uat|prod` (default `dev`).
+
 ## Layer responsibilities
-- **readers**: parse a file into `list[dict]`. No DB.
+- **models**: DB-first ORM definitions. Reflect existing tables; no logic.
 - **repositories**: all DB access. The only place that reads/writes tables.
-- **filetype/resolver**: map filename to a file type.
-- **ingestion**: orchestrate read -> write to `File_tbl` + detail table.
-- **processing**: transform detail rows into voyages (group + unpivot).
-- **processing/mapping**: the only place that holds Mode/Direction/Loaded/Equip rules.
-- **pipelines**: thin orchestration. No business logic.
-- **analytics**: reads via repositories only. Never imports readers or processors.
+- **ingestion/<x>/reader**: parse a file into rows. No DB.
+- **ingestion/<x>/loader**: write rows to `File_tbl` + the detail table.
+- **ingestion/runner** (+ `registry`): orchestrate ingestion; registry maps FileType -> reader + loader.
+- **processing/<x>/mapper**: turn one raw detail row into a `MappedVoyage`. The only source-aware
+  processing piece; holds the explicit column tables (Mode/Direction/Equip and the descriptive fields).
+- **processing/field_mapping**: shared `build_fields` helper (row + spec -> `MappedField[]`).
+- **processing/writer**: persist a `MappedVoyage` (voyages, details, field maps). Source-agnostic.
+- **processing/runner** (+ `registry`): two-phase orchestration; registry maps FileType -> detail repo + mapper.
+- **processing/status**: classify voyages that fell off the report.
+- **entrypoints/cli**: argparse entry; parses args, binds the DB env, delegates to the runners. No logic.
+- **forecast**: future; reads via repositories only. Never imports ingestion or processing internals.
 
 ## Coding rules
 - Simple over clever. Readable over short.
-- One transaction per file: commit all, or rollback and set `LoadStatus = FAILED`.
+- One transaction per phase: commit all, or roll back and set `LoadStatusId = ERROR` (5).
 - Comments only when they add value.
 - Follow SOLID principles.
-- Reuse code (e.g. `base_repository`, `base_reader`, `base_processor`).
-- Factories use explicit dict registration. No auto-discovery.
+- Reuse code (e.g. `db/models/base.py`, `ingestion/base.py`, `processing/field_mapping.py`,
+  the shared `processing/writer.py`).
+- Registries use explicit dict registration. No auto-discovery.
 
 ## Extending later (no core changes)
-To add PPA / RPA:
-- `models/<x>_file_detail.py` (reflect from live DB)
-- `readers/<x>_reader.py` + register in `reader_factory`
-- `repositories/<x>_file_detail_repository.py`
-- `processing/<x>_processor.py` + `mapping/<x>_mapper.py` + register in `processor_factory`
-- add prefix to `filetype/resolver.py`
+To add a new source (e.g. FPA), reusing the shared writer/runner unchanged:
+- add its `FileType` to `lookups.py`
+- `db/models/<x>_file_detail.py` (reflect from live DB) + `db/repositories/<x>_file_detail_repository.py`
+- `ingestion/<x>/reader.py` + `ingestion/<x>/loader.py` + register in `ingestion/registry.py`
+- `processing/<x>/mapper.py` (its own `<X>_COLUMN_MAP` + `<X>_FIELD_MAP`) + register in `processing/registry.py`
 
-## Open items (must resolve before the relevant step)
-- **Processed marker**: `LoadStatus` only means load succeeded. It does NOT mean a file was processed into voyages. Re-running processing will duplicate. Before building `process_pipeline`, decide the rule: check `Voyage_tbl.FileId` exists, or add a processed flag/date. Ask if unclear.
-- **Mapping rules**: column -> Mode/Direction/ContainerLoadedFlag/Equip are undefined. Keep `gpa_mapper.py` a stub until provided.
-- **History tables** (`VoyageHistory_tbl`, `VoyageDetailsHistory_tbl`): owner not decided (app / trigger / temporal). Ignore for now. Keep the seam.
+The field-mapping tables, `field_mapping.build_fields`, and `writer` need no changes — the new
+mapper just declares which columns feed which `FieldType`.
 
-## Build order
-1. `db/base.py`, `db/session.py`
-2. `models` (sqlacodegen from live DB, then clean up)
-3. `repositories`
-4. `readers` + `filetype/resolver`
-5. `ingestion` + `ingest_pipeline`
-6. `processing` (with mapper stub) + `process_pipeline`
+## Resolved design decisions (were open items)
+- **Processed marker**: tracked by `LoadStatusId` — 2 = ingested, 3 = voyages written, 4 = fully
+  processed. `process_file` refuses a file already at 4; an interrupted phase 2 safely resumes from 3.
+- **Mapping rules**: defined in `processing/gpa/mapper.py` — `GPA_COLUMN_MAP` (Mode/Direction/Equip)
+  and `GPA_FIELD_MAP` (the descriptive fields). Explicit tables, no name-sniffing.
+- **History tables** (`VoyageHistory_tbl`, `VoyageDetailsHistory_tbl`): SQL Server system-versioned
+  (temporal). The DB maintains them; the app relies on the seam, no ORM models.
+
+## Still open
+- **ExternalId resolution**: `FieldTypeValue.ExternalId` / `ExternalNotifFlag` — resolving a value to
+  an id in an external master table via `FieldType.ExternalWhereClause` (types 3 & 5 only) — is not
+  built. Left NULL for now. Design separately before implementing.
+
+## Build order (as built)
+1. `db/models/base.py`, `db/session.py`
+2. `db/models` (reflect from live DB, then clean up)
+3. `db/repositories`
+4. `ingestion` (`base`, `gpa/reader`, `gpa/loader`, `registry`) + `ingestion/runner`
+5. `processing` (`dto`, `field_mapping`, `gpa/mapper`, `writer`, `status`, `registry`) + `processing/runner`
+6. `entrypoints/cli.py` (+ `run.py`)
 
 ## Working agreement
 - Build only what is asked. Nothing extra.
@@ -137,7 +168,7 @@ To add PPA / RPA:
 
 ## Modularity (microservice-ready, monolith for now)
 - Build as a modular monolith. One deployable. Do not split into services yet.
-- Each module (ingestion, processing, analytics, services) depends only on:
+- Each module (ingestion, processing, forecast) depends only on:
   models, repositories, and its own code. No module imports another module's internals.
 - Cross-module calls go through a service or repository interface, never direct internal functions.
 - No shared mutable state between modules. Pass data explicitly.
