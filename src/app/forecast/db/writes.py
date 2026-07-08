@@ -1,18 +1,24 @@
 """WriteGateway - the only Python code that performs constrained writes.
 
 Each method maps 1:1 to a stored procedure and passes long-format data as a
-table-valued parameter (a list of tuples, which pyodbc binds as a TVP). Numeric
-values are converted to Decimal at the exact column scale so the float64 that
-numpy/pandas produce never silently degrades DECIMAL(18,8) on the way in.
+table-valued parameter (a list of tuples, which pyodbc binds as a TVP).
 
-The write surface is deliberately tiny and stable. Do NOT add write helpers
-here that bypass a proc - that is exactly how the hybrid rots.
+Binding rule for TVP numeric columns:
+  - COEFFICIENTS bind as Decimal, quantized to the column scale, so the
+    DECIMAL(18,8) values the model is reconstructed/inspected from never degrade
+    to float on the way in.
+  - Every OTHER measure value (inputs, predictions, metrics, actuals) binds as a
+    plain float. Two reasons: (1) these are analysis-grade values stored at
+    DECIMAL(18,6) - SQL Server coerces the float to the column scale on insert,
+    and reads.py already treats them as float for analysis; (2) it sidesteps a
+    pyodbc TVP quirk - pyodbc sizes a TVP's numeric column from the FIRST row's
+    Decimal (precision + scale), so a column whose leading row is < 1 (e.g. a
+    0/1 indicator input, or r_squared in the metrics frame) gets sized too narrow
+    and then raises DataError 22003 on the first later row that has an integer
+    part. Floats bind as SQL_DOUBLE and carry no such per-row precision guess.
 
-pyodbc TVP note: pyodbc sizes a TVP's numeric column from the FIRST row's Decimal
-(precision + scale), and every later row must fit that binding. A column whose
-first value is < 1 (no integer digits) gets sized too narrow and raises DataError
-22003 ("Numeric value out of range") on the first later row that has an integer
-part. Keep that in mind for any TVP column whose leading row can be a fraction.
+The write surface is deliberately tiny and stable. Do NOT add write helpers here
+that bypass a proc - that is exactly how the hybrid rots.
 """
 from __future__ import annotations
 
@@ -21,16 +27,26 @@ from decimal import Decimal
 import pandas as pd
 from sqlalchemy.engine import Engine
 
-_SCALE_6 = Decimal("0.000001")
+_SCALE_4 = Decimal("0.0001")
 _SCALE_8 = Decimal("0.00000001")
 
 
 def _dec(value, scale: Decimal):
     """None/NaN -> None; everything else -> Decimal quantized to the column scale.
-    Going through str() avoids carrying binary float noise into the Decimal."""
+    Going through str() avoids carrying binary float noise into the Decimal.
+    Used for the high-precision coefficient columns and scalar params only."""
     if value is None or (isinstance(value, float) and pd.isna(value)):
         return None
     return Decimal(str(value)).quantize(scale)
+
+
+def _f(value):
+    """None/NaN -> None; everything else -> float. Used for TVP measure columns
+    (inputs / predictions / metrics / actuals) so pyodbc binds SQL_DOUBLE and the
+    server coerces to the column's DECIMAL scale - no per-row precision guess."""
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return None
+    return float(value)
 
 
 def _as_date(value):
@@ -57,15 +73,17 @@ class WriteGateway:
     ) -> int:
         """One atomic run: batch + inputs + predictions. Returns input_batch_id."""
         input_rows = [
-            (int(r.feature_id), _as_date(r.target_date), _dec(r.feature_value, _SCALE_6), bool(r.is_forecasted_value))
+            (int(r.feature_id), _as_date(r.target_date), _f(r.feature_value), bool(r.is_forecasted_value))
             for r in inputs.itertuples(index=False)
         ]
         prediction_rows = [
-            (_as_date(r.target_date), _dec(r.predicted_value, _SCALE_6),
-             _dec(r.predicted_lower, _SCALE_6), _dec(r.predicted_upper, _SCALE_6))
+            (_as_date(r.target_date), _f(r.predicted_value),
+             _f(r.predicted_lower), _f(r.predicted_upper))
             for r in predictions.itertuples(index=False)
         ]
-        conf = _dec(interval_confidence_level, Decimal("0.0001")) if interval_confidence_level is not None else None
+        # interval_confidence_level is a SCALAR proc param (DECIMAL(5,4)), not a
+        # TVP row, so it is unaffected by the per-row inference and stays Decimal.
+        conf = _dec(interval_confidence_level, _SCALE_4) if interval_confidence_level is not None else None
         sql = "{CALL DemandForecast.usp_score_run (?, ?, ?, ?, ?, ?)}"
         params = [model_id, _as_date(as_of_date), conf, input_rows, prediction_rows, modified_by]
         return int(self._call_scalar(sql, params))
@@ -75,7 +93,7 @@ class WriteGateway:
     def upsert_actuals(self, *, actuals: pd.DataFrame, modified_by: str) -> None:
         """actuals: feature_id, observation_date, actual_value."""
         rows = [
-            (int(r.feature_id), _as_date(r.observation_date), _dec(r.actual_value, _SCALE_6))
+            (int(r.feature_id), _as_date(r.observation_date), _f(r.actual_value))
             for r in actuals.itertuples(index=False)
         ]
         self._call("{CALL DemandForecast.usp_upsert_actuals (?, ?)}", [rows, modified_by])
@@ -104,23 +122,15 @@ class WriteGateway:
 
         Returns {"model_id": int, "model_version": int}.
         """
-        # Coefficients stay Decimal: they are the DECIMAL(18,8) values the model
-        # is reconstructed/inspected from, and the intercept (first row) is wide
-        # enough to size the TVP's numeric columns correctly.
+        # Coefficients stay Decimal: DECIMAL(18,8) exactness for re-scoring.
         coef_rows = [
             (int(r.feature_id), _dec(r.coefficient_value, _SCALE_8),
              _dec(r.std_error, _SCALE_8), _dec(r.p_value, _SCALE_8))
             for r in coefficients.itertuples(index=False)
         ]
-        # metric_value binds as float, NOT Decimal. metric_frame leads with
-        # r_squared (< 1), so a Decimal binding would size this TVP column
-        # NUMERIC(<=6,6) off that first row and then overflow on the first metric
-        # with an integer part (rmse, f_statistic, aic, ...), raising pyodbc
-        # DataError 22003. Metrics are analysis-grade diagnostics stored as
-        # DECIMAL(18,6); binding float makes pyodbc use SQL_DOUBLE and lets SQL
-        # Server coerce to the column scale with no client-side precision guess.
+        # Metrics are analysis-grade diagnostics -> float (see module docstring).
         metric_rows = [
-            (str(r.metric_name), float(r.metric_value))
+            (str(r.metric_name), _f(r.metric_value))
             for r in metrics.itertuples(index=False)
         ]
         sql = "{CALL DemandForecast.usp_register_model (?, ?, ?, ?, ?, ?, ?, ?, ?)}"
