@@ -12,16 +12,44 @@
    - a scoring run is ONE server-side transaction (atomic), not N round-trips
    - actuals is a MERGE upsert (backfill/correction), which to_sql cannot do
 
- Idempotent. TVP types use IF TYPE_ID guards. NOTE: to CHANGE a TVP later you
- must DROP the procedures that reference it first (types cannot be altered).
+ TVP types live in dbo (NOT in DemandForecast). ODBC Driver 17 sends a TVP's
+ type name to the server WITHOUT its schema, so a schema-scoped type only
+ resolves for a caller whose default schema matches; putting the types in dbo -
+ the fallback schema for unqualified name resolution - lets every caller resolve
+ them regardless of default schema, with no per-login setup. The tables and the
+ procedures themselves stay in DemandForecast; only the parameter TYPES are dbo.
+
+ Idempotent. TVP types use IF TYPE_ID guards. The cleanup preamble below also
+ drops the pre-dbo DemandForecast.* TVP types on databases provisioned by an
+ earlier version of this script. NOTE: to CHANGE a TVP later you must DROP the
+ procedures that reference it first (types cannot be altered) - which is exactly
+ what the preamble does.
 ================================================================================
 */
 
 --------------------------------------------------------------------------------
--- Table-valued parameter types (one per long-format table the pipeline bulk-loads)
+-- 0. Cleanup preamble (safe on fresh AND already-provisioned databases)
+--    Drop the procs first so the TVP types they reference become droppable,
+--    then drop the old DemandForecast.* types. Everything is recreated below.
 --------------------------------------------------------------------------------
-IF TYPE_ID('DemandForecast.InputRow') IS NULL
-    CREATE TYPE DemandForecast.InputRow AS TABLE
+DROP PROCEDURE IF EXISTS DemandForecast.usp_score_run;
+DROP PROCEDURE IF EXISTS DemandForecast.usp_upsert_actuals;
+DROP PROCEDURE IF EXISTS DemandForecast.usp_register_model;
+GO
+
+DROP TYPE IF EXISTS DemandForecast.InputRow;
+DROP TYPE IF EXISTS DemandForecast.PredictionRow;
+DROP TYPE IF EXISTS DemandForecast.ActualRow;
+DROP TYPE IF EXISTS DemandForecast.CoefficientRow;
+DROP TYPE IF EXISTS DemandForecast.MetricRow;
+GO
+
+--------------------------------------------------------------------------------
+-- 1. Table-valued parameter types, in dbo (one per long-format table the
+--    pipeline bulk-loads).
+--------------------------------------------------------------------------------
+IF TYPE_ID('dbo.InputRow') IS NULL
+    CREATE TYPE dbo.InputRow AS TABLE
     (
         feature_id          INT            NOT NULL,
         target_date         DATE           NOT NULL,
@@ -30,8 +58,8 @@ IF TYPE_ID('DemandForecast.InputRow') IS NULL
     );
 GO
 
-IF TYPE_ID('DemandForecast.PredictionRow') IS NULL
-    CREATE TYPE DemandForecast.PredictionRow AS TABLE
+IF TYPE_ID('dbo.PredictionRow') IS NULL
+    CREATE TYPE dbo.PredictionRow AS TABLE
     (
         target_date     DATE           NOT NULL,
         predicted_value DECIMAL(18,6)  NOT NULL,
@@ -40,8 +68,8 @@ IF TYPE_ID('DemandForecast.PredictionRow') IS NULL
     );
 GO
 
-IF TYPE_ID('DemandForecast.ActualRow') IS NULL
-    CREATE TYPE DemandForecast.ActualRow AS TABLE
+IF TYPE_ID('dbo.ActualRow') IS NULL
+    CREATE TYPE dbo.ActualRow AS TABLE
     (
         feature_id       INT            NOT NULL,
         observation_date DATE           NOT NULL,
@@ -49,8 +77,8 @@ IF TYPE_ID('DemandForecast.ActualRow') IS NULL
     );
 GO
 
-IF TYPE_ID('DemandForecast.CoefficientRow') IS NULL
-    CREATE TYPE DemandForecast.CoefficientRow AS TABLE
+IF TYPE_ID('dbo.CoefficientRow') IS NULL
+    CREATE TYPE dbo.CoefficientRow AS TABLE
     (
         feature_id        INT            NOT NULL,
         coefficient_value DECIMAL(18,8)  NOT NULL,
@@ -59,8 +87,8 @@ IF TYPE_ID('DemandForecast.CoefficientRow') IS NULL
     );
 GO
 
-IF TYPE_ID('DemandForecast.MetricRow') IS NULL
-    CREATE TYPE DemandForecast.MetricRow AS TABLE
+IF TYPE_ID('dbo.MetricRow') IS NULL
+    CREATE TYPE dbo.MetricRow AS TABLE
     (
         metric_name  NVARCHAR(50)   NOT NULL,
         metric_value DECIMAL(18,6)  NOT NULL
@@ -77,8 +105,8 @@ CREATE OR ALTER PROCEDURE DemandForecast.usp_score_run
     @model_id                  INT,
     @as_of_date                DATE,
     @interval_confidence_level DECIMAL(5,4),
-    @inputs                    DemandForecast.InputRow      READONLY,
-    @predictions               DemandForecast.PredictionRow READONLY,
+    @inputs                    dbo.InputRow      READONLY,
+    @predictions               dbo.PredictionRow READONLY,
     @modified_by               NVARCHAR(128)
 AS
 BEGIN
@@ -122,7 +150,7 @@ GO
 --   the temporal history stays meaningful.
 --------------------------------------------------------------------------------
 CREATE OR ALTER PROCEDURE DemandForecast.usp_upsert_actuals
-    @rows        DemandForecast.ActualRow READONLY,
+    @rows        dbo.ActualRow READONLY,
     @modified_by NVARCHAR(128)
 AS
 BEGIN
@@ -155,12 +183,14 @@ GO
 -- usp_register_model
 --   Persist a trained model atomically: registry row + coefficients + metrics.
 --   model_version defaults to 1; trained_date defaults to now (UTC).
+--   NOTE: 02_register_model_versioning.sql supersedes this body with the
+--   version-assigning / retire-previous-active variant. Apply 02 after this.
 --------------------------------------------------------------------------------
 CREATE OR ALTER PROCEDURE DemandForecast.usp_register_model
     @model_name        NVARCHAR(150),
     @target_feature_id INT,
-    @coefficients      DemandForecast.CoefficientRow READONLY,
-    @metrics           DemandForecast.MetricRow      READONLY,
+    @coefficients      dbo.CoefficientRow READONLY,
+    @metrics           dbo.MetricRow      READONLY,
     @modified_by       NVARCHAR(128),
     @model_version     INT       = 1,
     @trained_date      DATETIME2 = NULL,
