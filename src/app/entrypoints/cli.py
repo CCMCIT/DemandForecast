@@ -190,7 +190,8 @@ def run_command(args) -> None:
             f"failed={len(result['failed'])}"
         )
     elif args.command == "process":
-        count = processing_runner.process_file(args.file_id)
+        print(f"  processing FileId={args.file_id}")
+        count = processing_runner.process_file(args.file_id, progress=_print_progress)
         print(f"Processed {count} detail row(s) for FileId={args.file_id}")
     elif args.command == "process-next":
         result = processing_runner.process_next(args.count, progress=_print_progress)
@@ -223,8 +224,12 @@ def _print_progress(event: str, **data) -> None:
     if event == "start":
         print(f"{data['total']} file(s) to process.")
     elif event == "processing":
+        print()
         print(f"  {'processing':<10} FileId={data['file_id']}")
+    elif event == "phase":
+        print(f"    phase {data['number']} ({data['name']}): {data['state']}")
     elif event == "processed":
+        print()
         print(f"  {'processed':<10} FileId={data['file_id']} ({data['count']} detail rows)")
     elif event == "skipped":
         print(f"  {'skipped':<10} FileId={data['file_id']} (no processor for its FileType)")

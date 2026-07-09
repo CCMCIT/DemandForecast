@@ -20,4 +20,4 @@ CANCELLED_THRESHOLD_DAYS = 1
 def classify(work_date: date, reported_date: date) -> VoyageStatus:
     if work_date <= reported_date + timedelta(days=CANCELLED_THRESHOLD_DAYS):
         return VoyageStatus.CALLED
-    return VoyageStatus.CANCELLED
+    return VoyageStatus.CANCELED
