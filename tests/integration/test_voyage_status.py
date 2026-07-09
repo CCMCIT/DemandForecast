@@ -131,7 +131,7 @@ def test_voyage_is_cancelled_when_last_report_is_beyond_threshold():
     _drop_off_the_report(guid)
 
     # Step 3: gap is 2 days (> threshold) -> it never came -> Cancelled.
-    assert _status_of(voyage) == VoyageStatus.CANCELLED
+    assert _status_of(voyage) == VoyageStatus.CANCELED
 
 
 def test_reappearing_voyage_resets_to_to_call():
@@ -141,7 +141,7 @@ def test_reappearing_voyage_resets_to_to_call():
     # Step 1: voyage appears, then falls off beyond the threshold -> Cancelled.
     processing_runner.process_file(_seed_file(f"test_{guid}_1.csv", voyage, REPORTED_BEYOND_THRESHOLD))
     _drop_off_the_report(guid)
-    assert _status_of(voyage) == VoyageStatus.CANCELLED
+    assert _status_of(voyage) == VoyageStatus.CANCELED
 
     # Step 2: the voyage shows up again on a new file.
     processing_runner.process_file(_seed_file(f"test_{guid}_2.csv", voyage, REPORTED_WITHIN_THRESHOLD))
