@@ -61,8 +61,9 @@ Every command also takes `--env dev|uat|prod` (default `dev`).
 | Running unit & integration tests | [tests](documentation/tests.md) |
 | How the field-mapping tables work | [explanation](documentation/explanation.md) |
 
-A visual diagram of the tables and flow:
-[data_pipeline.html](documentation/data_pipeline.html) (open in a browser).
+New here? Start with [**project-overview.html**](project-overview.html) — a one-page
+visual tour (open in a browser). The full ER diagram is
+[documentation/DemandForecast_db_schema_v2.drawio](documentation/DemandForecast_db_schema_v2.drawio).
 
 ## Branching
 
