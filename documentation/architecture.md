@@ -25,8 +25,8 @@ src/app/
 ├── config/settings.py          # .env -> Env(dev/uat/prod) + connection_string + paths
 ├── db/
 │   ├── session.py              # engine + SessionLocal; configure(env) binds dev/uat/prod
-│   ├── models/                 # reflected models, one per table
-│   └── repositories/           # one per table; the ONLY place with DB queries
+│   ├── models/                 # reflected models, one per ORM-written table
+│   └── repositories/           # one per table; the place with DB queries (except the field-map proc)
 ├── ingestion/                  # JOB 1: file on disk -> raw company table
 │   ├── base.py                 #   reader/loader contracts
 │   ├── registry.py             #   FileTypeId -> (reader, loader)   <- add a company here
@@ -62,9 +62,16 @@ and `WORK_DATE`. A bad file is rejected whole (before any write) and marked `ERR
 
 The voyage's descriptive fields — **Vessel, Ocean Carrier, Service, Location, Origin,
 Destination** — are written by the `DemandForecast.VoyageFieldMap_upsert` proc, called
-once per field: it find-or-creates `FieldValue` and `FieldTypeValue`, then upserts
-`VoyageFieldMap`. It's idempotent (reprocessing never duplicates). Equipment type is
-encoded on `VoyageDetails.FieldTypeValueEquipTypeId` (ids 1/2/3 = 20CH/40CH/45CH).
+once per field from `writer.write_fields`: it find-or-creates `FieldValue` and
+`FieldTypeValue`, then upserts `VoyageFieldMap`. It's idempotent (reprocessing never
+duplicates). Equipment type is encoded on `VoyageDetails.FieldTypeValueEquipTypeId`
+(ids 1/2/3 = 20CH/40CH/45CH).
+
+> **Field-mapping tables are the exception to the model/repository rules above.**
+> `FieldValue_tbl`, `FieldTypeValue_tbl` and `VoyageFieldMap_tbl` are populated
+> **only by the `VoyageFieldMap_upsert` proc** — so they have **no ORM models and no
+> repositories**; the writer calls the proc directly via `session.execute`. Everything
+> else goes through models + repositories.
 
 ## How to add a company (the scaling rule)
 
