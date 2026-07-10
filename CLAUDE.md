@@ -5,9 +5,11 @@ Ingest daily files into staging tables, then process them into voyage tables.
 Future: forecasting on this data.
 
 - Phase 1a — Ingestion: read a file, write `File_tbl` + `GpaFileDetail_tbl`.
-- Phase 1b — Processing: read `GpaFileDetail_tbl`, write `Voyage_tbl` + `VoyageDetails_tbl`,
-  plus the field-mapping tables `FieldValue_tbl` -> `FieldTypeValue_tbl` -> `VoyageFieldMap_tbl`
-  (the voyage's Vessel / Ocean Carrier / Service / Location / Origin / Destination values).
+- Phase 1b — Processing: read `GpaFileDetail_tbl`, write `Voyage_tbl` + `VoyageDetails_tbl`.
+  The voyage's descriptive fields (Vessel / Ocean Carrier / Service / Location / Origin /
+  Destination) are written by the DB proc `DemandForecast.VoyageFieldMap_upsert`, called
+  once per field — it find-or-creates `FieldValue_tbl` + `FieldTypeValue_tbl` and upserts
+  `VoyageFieldMap_tbl`. See `processing/writer.py::write_fields`.
 - File type is chosen per file (CLI `--type`, e.g. `GPA`) and drives the reader/mapper via
   explicit registries. One format per type.
 - Many voyages per file.
@@ -56,21 +58,14 @@ project/
 │   │   │   ├── voyage_details.py
 │   │   │   ├── mode.py
 │   │   │   ├── direction.py
-│   │   │   ├── field_type.py
-│   │   │   ├── field_value.py
-│   │   │   ├── field_type_value.py
-│   │   │   ├── voyage_field_map.py
 │   │   │   └── process_log_error.py
-│   │   └── repositories/            # ALL DB access — one per table (+ the field-mapping ones)
+│   │   └── repositories/            # ALL DB access — one per table
 │   │       ├── file_repository.py
 │   │       ├── gpa_file_detail_repository.py
 │   │       ├── voyage_repository.py
 │   │       ├── voyage_details_repository.py
 │   │       ├── mode_repository.py
 │   │       ├── direction_repository.py
-│   │       ├── field_value_repository.py         # get-or-create + cache
-│   │       ├── field_type_value_repository.py    # get-or-create + cache
-│   │       ├── voyage_field_map_repository.py
 │   │       └── process_log_error_repository.py
 │   │
 │   ├── ingestion/                   # file -> File_tbl + <X>FileDetail_tbl
@@ -122,7 +117,7 @@ CLI commands (`entrypoints/cli.py`): `ingest`, `ingest-folder`, `process`, `proc
 
 ## Coding rules
 - Simple over clever. Readable over short.
-- One transaction per phase: commit all, or roll back and set `LoadStatusId = ERROR` (5).
+- One transaction per phase: commit all, or roll back and set `LoadStatusId = ERROR` (99).
 - Comments only when they add value.
 - Follow SOLID principles.
 - Reuse code (e.g. `db/models/base.py`, `ingestion/base.py`, `processing/field_mapping.py`,
@@ -140,8 +135,9 @@ The field-mapping tables, `field_mapping.build_fields`, and `writer` need no cha
 mapper just declares which columns feed which `FieldType`.
 
 ## Resolved design decisions (were open items)
-- **Processed marker**: tracked by `LoadStatusId` — 2 = ingested, 3 = voyages written, 4 = fully
-  processed. `process_file` refuses a file already at 4; an interrupted phase 2 safely resumes from 3.
+- **Processed marker**: tracked by `LoadStatusId` — 2 = ingested, 3 = voyages, 4 = details,
+  5 = field maps (fully processed), 99 = error. `process_file` refuses a file already at 5;
+  an interrupted run resumes from its last committed phase (skips 1/2/3 as already done).
 - **Mapping rules**: defined in `processing/gpa/mapper.py` — `GPA_COLUMN_MAP` (Mode/Direction/Equip)
   and `GPA_FIELD_MAP` (the descriptive fields). Explicit tables, no name-sniffing.
 - **History tables** (`VoyageHistory_tbl`, `VoyageDetailsHistory_tbl`): SQL Server system-versioned

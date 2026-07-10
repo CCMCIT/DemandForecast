@@ -17,14 +17,15 @@ class LoadStatus(IntEnum):
     INSERTED_INTO_FILE = 1
     INSERTED_INTO_FILE_DETAIL = 2     # ingestion done: ready to process
     INSERTED_INTO_VOYAGE = 3
-    INSERTED_INTO_VOYAGE_DETAIL = 4   # processing done
-    ERROR = 5
+    INSERTED_INTO_VOYAGE_DETAIL = 4   # details done
+    INSERTED_INTO_FIELD_MAP = 5       # field maps + all relevant tables done
+    ERROR = 99
 
 
 class VoyageStatus(IntEnum):
     TO_CALL = 1     # on the current report
     CALLED = 2      # fell off the report and was assessed as called
-    CANCELLED = 3   # fell off the report and was assessed as cancelled
+    CANCELED = 3    # fell off the report and was assessed as canceled
 
 
 class FieldType(IntEnum):
@@ -34,4 +35,4 @@ class FieldType(IntEnum):
     SERVICE = 4
     LOCATION = 5
     ORIGIN_PORT = 6
-    DESTINATION_PORT = 7   # DB spells this 'Destinatino Port' (typo kept in the data)
+    DESTINATION_PORT = 7   # DB spells this 'Destination Port' (typo kept in the data)
