@@ -40,7 +40,8 @@ project/
 ├── requirements.txt                 # sqlalchemy, pyodbc, pandas, openpyxl, python-dotenv, pytest
 ├── pytest.ini                       # markers (unit / integration); pythonpath = src
 ├── .env                             # DB_CONNECTION_STRING_{DEV,UAT,PROD}, EXCEL_WATCH_FOLDER
-├── documentation/                   # schema diagram (.drawio/.png), data_pipeline.html, notes
+├── project-overview.html            # one-page visual tour for new developers
+├── documentation/                   # schema diagram (.drawio), setup/cli/tests/architecture docs
 │
 ├── src/app/
 │   ├── lookups.py                   # IntEnums mirroring DB lookups: FileType, LoadStatus, VoyageStatus, FieldType
