@@ -1,21 +1,25 @@
-"""Purpose: orchestrate processing of loaded files into Voyage_tbl + VoyageDetails_tbl.
+"""Purpose: orchestrate processing of loaded files into Voyage_tbl, VoyageDetails_tbl,
+and the field-mapping tables.
 
-Shared flow, agnostic to the source: the detail repository and mapper are chosen
-by the File's FileTypeId via the registry. Each file is processed in two committed
-phases so an interrupted run can resume without losing or duplicating work:
+Shared flow, agnostic to the source: the detail repository and mapper are chosen by
+the File's FileTypeId via the registry. Each file is processed in three committed
+phases, each atomic across the whole file, so an interrupted run resumes from the
+last completed phase without losing or duplicating work:
 
-  Phase 1 - insert every voyage, commit, set LoadStatusId = INSERTED_INTO_VOYAGE (3).
-  Phase 2 - insert every detail in one commit (all-or-none), set
-            LoadStatusId = INSERTED_INTO_VOYAGE_DETAIL (4).
+  Phase 1 - insert every voyage,   commit, LoadStatusId = INSERTED_INTO_VOYAGE (3).
+  Phase 2 - insert every detail,   commit, LoadStatusId = INSERTED_INTO_VOYAGE_DETAIL (4).
+  Phase 3 - write every field map, commit, LoadStatusId = INSERTED_INTO_FIELD_MAP (5).
+            (field maps go through the DemandForecast.VoyageFieldMap_upsert proc)
 
-If phase 2 is interrupted its transaction rolls back, so no detail is written and
-the file stays at status 3: next run finds the voyages already there and re-runs
-phase 2 only. A user stop (Ctrl+C) prints a notice and leaves the status as-is; a
-real exception rolls back, sets ERROR (5), and logs to Process_Log_Error_tbl.
+On resume, the file's LoadStatusId says which phases are already committed: those are
+skipped and the already-saved voyages are loaded so only the remaining phases run.
+A user stop (Ctrl+C) rolls back the current phase and leaves the status at the last
+committed phase. A real exception rolls back, sets ERROR (99), and logs to
+Process_Log_Error_tbl; a file left at ERROR is reprocessed from phase 1.
 
-- process_file(file_id): process one file across both phases.
-- process_pending(): process every file at INSERTED_INTO_FILE_DETAIL (2, new) or
-  INSERTED_INTO_VOYAGE (3, resume), skipping types with no processor yet.
+- process_file(file_id): process/resume one file across the three phases.
+- process_pending(): process every file at status 2 (new), 3 or 4 (resume),
+  skipping types with no processor yet.
 - process_next(count): process the next `count` pending files (same order).
 """
 from app.lookups import LoadStatus
@@ -27,14 +31,15 @@ from app.db.repositories.direction_repository import DirectionRepository
 from app.db.repositories.voyage_repository import VoyageRepository
 from app.processing.registry import get_processor, has_processor
 from app.processing.status import classify
+from app.processing.validation import validate_voyages
 from app.processing.writer import VoyageWriter
 
 
 class AlreadyProcessedError(Exception):
-    """Raised when a file was already processed into voyages (LoadStatusId=4)."""
+    """Raised when a file was already fully processed (LoadStatusId=5)."""
 
 
-def process_file(file_id: int) -> int:
+def process_file(file_id: int, progress=None) -> int:
     _reject_if_already_processed(file_id)  # fail fast, before the transaction
 
     session = SessionLocal()
@@ -50,20 +55,49 @@ def process_file(file_id: int) -> int:
         )
         mapped = [map_row(row) for row in rows]
 
-        # Phase 1: voyages only. On resume (status 3) these already exist, so the
-        # writer replaces them in place instead of inserting duplicates.
-        voyages = [writer.write_voyage(m) for m in mapped]
-        file.LoadStatusId = LoadStatus.INSERTED_INTO_VOYAGE
-        session.commit()
+        # Reject the whole file up front if any row is unusable, before any write.
+        # On failure the except below rolls back (nothing written), marks the file
+        # ERROR, and logs -- so a bad file is skipped, not partially processed.
+        validate_voyages(mapped)
 
-        # Phase 2: all details and field maps in a single transaction. If it is
-        # interrupted the rollback leaves zero of both, so the file stays at status
-        # 3 and phase 2 is safely re-run next time.
+        # Resume from where a previous run stopped. The file's LoadStatusId says
+        # which phases are already committed, so we skip those and only run what's
+        # left. A file at ERROR (99) is reprocessed from phase 1 (idempotent).
+        status = file.LoadStatusId
+        voyages_done = status in (
+            LoadStatus.INSERTED_INTO_VOYAGE,
+            LoadStatus.INSERTED_INTO_VOYAGE_DETAIL,
+        )
+        details_done = status == LoadStatus.INSERTED_INTO_VOYAGE_DETAIL
+
+        # Phase 1: voyages. If already committed (resume), load them instead of
+        # rewriting -- avoids duplicate work and spurious temporal-history versions.
+        if voyages_done:
+            voyages = writer.load_voyages(mapped)
+            _report(progress, "phase", number=1, name="voyages", state="skipped")
+        else:
+            voyages = [writer.write_voyage(m) for m in mapped]
+            file.LoadStatusId = LoadStatus.INSERTED_INTO_VOYAGE
+            session.commit()
+            _report(progress, "phase", number=1, name="voyages", state="completed")
+
+        # Phase 2: details (skip if already committed).
+        if not details_done:
+            for m, voyage in zip(mapped, voyages):
+                writer.write_details(m, voyage)
+            file.LoadStatusId = LoadStatus.INSERTED_INTO_VOYAGE_DETAIL
+            session.commit()
+            _report(progress, "phase", number=2, name="details", state="completed")
+        else:
+            _report(progress, "phase", number=2, name="details", state="skipped")
+
+        # Phase 3: field maps via the proc. Always runs here -- the only "phase 3
+        # done" state (5) is rejected up front by _reject_if_already_processed.
         for m, voyage in zip(mapped, voyages):
-            writer.write_details(m, voyage)
             writer.write_fields(m, voyage)
-        file.LoadStatusId = LoadStatus.INSERTED_INTO_VOYAGE_DETAIL
+        file.LoadStatusId = LoadStatus.INSERTED_INTO_FIELD_MAP
         session.commit()
+        _report(progress, "phase", number=3, name="field maps", state="completed")
 
         # Voyages still marked ToCall but absent from this file have fallen off the
         # report -> classify each as Called or Cancelled. Own commit; a failure
@@ -71,8 +105,8 @@ def process_file(file_id: int) -> int:
         _classify_fallen_off(session, {r.VOYAGE for r in rows}, detail_repo_cls, file_id)
         return len(rows)
     except KeyboardInterrupt:
-        # User stop: discard any partial phase-2 details and leave the status
-        # untouched (3 if phase 1 committed, else 2) so the file resumes later.
+        # User stop: discard the current uncommitted phase and leave the status at
+        # the last committed phase, so the next run resumes from there.
         session.rollback()
         print("user requested stop")
         raise
@@ -94,9 +128,10 @@ def process_pending(progress=None, limit=None) -> dict:
     means all. process_next is the named entry point for the "next N files" case."""
     with session_scope() as session:
         repo = FileRepository(session)
-        # Status 3 first: finish files whose voyages are in but details are not,
-        # then status 2: files not yet started.
-        files = repo.get_by_load_status(LoadStatus.INSERTED_INTO_VOYAGE) + \
+        # Most-complete first so interrupted files finish before new ones start:
+        # status 4 (details in, field maps not) -> 3 (voyages in, details not) -> 2 (new).
+        files = repo.get_by_load_status(LoadStatus.INSERTED_INTO_VOYAGE_DETAIL) + \
+            repo.get_by_load_status(LoadStatus.INSERTED_INTO_VOYAGE) + \
             repo.get_by_load_status(LoadStatus.INSERTED_INTO_FILE_DETAIL)
         targets = [(f.FileId, f.FileTypeId) for f in files]
         if limit is not None:
@@ -112,7 +147,7 @@ def process_pending(progress=None, limit=None) -> dict:
             continue
         _report(progress, "processing", file_id=file_id)
         try:
-            count = process_file(file_id)
+            count = process_file(file_id, progress=progress)
             processed.append((file_id, count))
             _report(progress, "processed", file_id=file_id, count=count)
         except Exception as exc:
@@ -123,7 +158,7 @@ def process_pending(progress=None, limit=None) -> dict:
 
 def process_next(count: int, progress=None) -> dict:
     """Process the next `count` pending files, in the same priority order as
-    process_pending (status 3 before status 2). A thin cap over process_pending;
+    process_pending (status 4, then 3, then 2). A thin cap over process_pending;
     files whose type has no processor still count toward `count` (reported as
     skipped)."""
     return process_pending(progress=progress, limit=count)
@@ -133,12 +168,18 @@ def _classify_fallen_off(session, in_file_voyages, detail_repo_cls, file_id) -> 
     """Classify voyages that dropped off the report. Any voyage still marked
     ToCall that is not in the file just processed has fallen off; set it Called or
     Cancelled from its own last reported date vs its work date. Runs in its own
-    commit and swallows errors -- the file itself is already processed."""
+    commit and swallows errors -- the file itself is already processed.
+
+    The reported dates for all fallen-off voyages are fetched in ONE query
+    (get_reported_dates) rather than one query per voyage."""
     try:
         detail_repo = detail_repo_cls(session)
-        voyages = VoyageRepository(session)
-        for voyage in voyages.get_tocall_not_in(in_file_voyages):
-            reported_date = detail_repo.get_reported_date(voyage.FileId, voyage.Voyage)
+        voyages = VoyageRepository(session).get_tocall_not_in(in_file_voyages)
+        reported_dates = detail_repo.get_reported_dates(
+            [(v.FileId, v.Voyage) for v in voyages]
+        )
+        for voyage in voyages:
+            reported_date = reported_dates.get((voyage.FileId, voyage.Voyage))
             if reported_date is None or voyage.WORK_DATE is None:
                 continue  # cannot classify without both dates
             voyage.VoyageStatusId = classify(voyage.WORK_DATE, reported_date)
@@ -163,7 +204,7 @@ def _reject_if_already_processed(file_id: int) -> None:
         file = FileRepository(session).get(file_id)
     if file is None:
         raise ValueError(f"No File with FileId {file_id}")
-    if file.LoadStatusId == LoadStatus.INSERTED_INTO_VOYAGE_DETAIL:
+    if file.LoadStatusId == LoadStatus.INSERTED_INTO_FIELD_MAP:
         raise AlreadyProcessedError(
             f"FileId {file_id} is already processed (LoadStatusId={file.LoadStatusId})."
         )
