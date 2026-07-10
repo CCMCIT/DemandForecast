@@ -24,10 +24,13 @@ version control — it holds credentials.
 
 ## Install
 
+Dependencies are listed in **`requirements.txt`** (SQLAlchemy, pyodbc, python-dotenv,
+pytest). Install them into a virtualenv:
+
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt   # sqlalchemy, pyodbc, pandas, openpyxl, python-dotenv, pytest
+pip install -r requirements.txt
 ```
 
 If activating the venv is blocked by an execution policy, either allow it for the
