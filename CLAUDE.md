@@ -40,7 +40,7 @@ project/
 ├── requirements.txt                 # sqlalchemy, pyodbc, pandas, openpyxl, python-dotenv, pytest
 ├── pytest.ini                       # markers (unit / integration); pythonpath = src
 ├── .env                             # DB_CONNECTION_STRING_{DEV,UAT,PROD}, EXCEL_WATCH_FOLDER
-├── project-overview.html            # one-page visual tour for new developers
+├── project-overview.md              # one-page tour for new developers (renders on GitHub)
 ├── documentation/                   # schema diagram (.drawio), setup/cli/tests/architecture docs
 │
 ├── src/app/
