@@ -3,8 +3,8 @@
 Source-agnostic and reused by every company (Open/Closed): it consumes the
 MappedVoyage contract, never a company's raw model. It depends on repository
 abstractions, not on the session's query API (Dependency Inversion), and does no
-commits — the runner owns the transaction. Mode/Direction names are resolved via
-lookup maps passed in once per run, so no per-row DB hits.
+commits — the runner owns the transaction. Equipment/Mode/Direction names are
+resolved via lookup maps passed in once per run, so no per-row DB hits.
 
 The voyage's descriptive fields are written by the DB proc
 DemandForecast.VoyageFieldMap_upsert (see write_fields).
@@ -20,12 +20,19 @@ from app.processing.dto import MappedVoyage
 
 
 class VoyageWriter:
-    def __init__(self, session, mode_ids: dict[str, int], direction_ids: dict[str, int]):
+    def __init__(
+        self,
+        session,
+        mode_ids: dict[str, int],
+        direction_ids: dict[str, int],
+        equipment_ids: dict[str, int],
+    ):
         self.session = session
         self.voyages = VoyageRepository(session)
         self.details = VoyageDetailsRepository(session)
         self.mode_ids = mode_ids
         self.direction_ids = direction_ids
+        self.equipment_ids = equipment_ids
 
     def write_voyage(self, mapped: MappedVoyage) -> Voyage:
         """Phase 1: insert or replace the voyage only, no details.
@@ -49,7 +56,7 @@ class VoyageWriter:
             [
                 VoyageDetails(
                     VoyageId=voyage.VoyageId,
-                    FieldTypeValueEquipTypeId=d.field_type_value_id,
+                    FieldTypeValueEquipTypeId=self._equipment_id(d.equipment_name),
                     ModeId=self.mode_ids[d.mode_name],
                     DirectionId=self.direction_ids[d.direction_name],
                     ContainerLoadedFlag=bool(d.container_loaded_flag),
@@ -58,6 +65,14 @@ class VoyageWriter:
                 for d in mapped.details
             ]
         )
+
+    def _equipment_id(self, name: str | None) -> int | None:
+        """Resolve an equipment name to its FieldTypeValueId. Equipment types are a
+        closed set owned by the DB, so an unknown name is a mapping bug, never a
+        value to create. Prevalidation rejects the file first; this is the backstop."""
+        if name is None:
+            return None  # the empties (MT) carry no equipment type
+        return self.equipment_ids[name]
 
     def write_fields(self, mapped: MappedVoyage, voyage: Voyage) -> None:
         """Phase 2: write the voyage's descriptive fields via the DB proc.
