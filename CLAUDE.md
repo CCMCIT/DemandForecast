@@ -94,9 +94,12 @@ project/
 │
 └── tests/
     ├── integration/                 # hit the live DB (marker: integration)
-    ├── processing/                  # offline mapper tests (marker: unit)
-    └── unit/                        # offline tests (placeholder)
+    └── unit/                        # offline tests (marker: unit); mirrors src/app/
+        └── processing/              # mapper / validation tests
 ```
+
+Top level of `tests/` is the KIND of test (unit / integration). Below it, mirror the
+`src/app/` layout. No other top-level test folders.
 
 CLI commands (`entrypoints/cli.py`): `ingest`, `ingest-folder`, `process`, `process-next`,
 `process-pending`, `import-status`. Every command takes `--env dev|uat|prod` (default `dev`).

@@ -5,8 +5,8 @@ Tests live in `tests/` and run with **pytest** (config in `pytest.ini`:
 
 ## Layout
 
-- **Unit** — offline, no external dependencies. Marker: `unit`.
-  (e.g. `tests/processing/` for the mapper/validation tests; `tests/unit/` placeholder.)
+- **Unit** — offline, no external dependencies. Marker: `unit`. Located in `tests/unit/`,
+  which mirrors `src/app/` (e.g. `tests/unit/processing/` for the mapper/validation tests).
 - **Integration** — hit the **live database**, so a working `.env` connection is
   required. Marker: `integration`. Located in `tests/integration/`.
 
@@ -22,7 +22,7 @@ pytest -m unit               # offline only (fast)
 pytest -m integration        # live-DB only
 pytest -m "not integration"  # everything except live-DB tests
 pytest -v                    # verbose
-pytest tests/processing/test_gpa_field_mapping.py -v   # a single file
+pytest tests/unit/processing/test_gpa_field_mapping.py -v   # a single file
 ```
 
 Run from the project root (`pytest.ini` sets `pythonpath = src`, so no env setup is
