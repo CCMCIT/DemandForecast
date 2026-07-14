@@ -48,8 +48,8 @@ def map_row(detail) -> MappedVoyage:
     )
     for column, field_type_value_id, direction, mode, loaded in GPA_COLUMN_MAP:
         containers = getattr(detail, column)
-        if containers is None:
-            continue  # empty column carries no data -> no VoyageDetails row
+        if not containers:
+            continue  # empty (NULL) or zero column carries no data -> no VoyageDetails row
         voyage.details.append(
             MappedDetail(
                 field_type_value_id=field_type_value_id,
