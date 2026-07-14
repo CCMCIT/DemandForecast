@@ -22,12 +22,13 @@ Process_Log_Error_tbl; a file left at ERROR is reprocessed from phase 1.
   skipping types with no processor yet.
 - process_next(count): process the next `count` pending files (same order).
 """
-from app.lookups import LoadStatus
+from app.lookups import FieldType, LoadStatus
 from app.db.session import SessionLocal, session_scope
 from app.db.repositories.file_repository import FileRepository
 from app.db.repositories.process_log_error_repository import ProcessLogErrorRepository
 from app.db.repositories.mode_repository import ModeRepository
 from app.db.repositories.direction_repository import DirectionRepository
+from app.db.repositories.field_type_value_repository import FieldTypeValueRepository
 from app.db.repositories.voyage_repository import VoyageRepository
 from app.processing.registry import get_processor, has_processor
 from app.processing.status import classify
@@ -48,17 +49,21 @@ def process_file(file_id: int, progress=None) -> int:
         detail_repo_cls, map_row = get_processor(file.FileTypeId)
         rows = detail_repo_cls(session).get_by_file_id(file_id)
 
+        # The lookup maps are loaded once per file (name -> id) and handed to the
+        # writer, so resolving a name costs no DB hit per row.
+        equipment_ids = FieldTypeValueRepository(session).value_to_id(FieldType.EQUIPMENT_TYPE)
         writer = VoyageWriter(
             session,
             ModeRepository(session).name_to_id(),
             DirectionRepository(session).name_to_id(),
+            equipment_ids,
         )
         mapped = [map_row(row) for row in rows]
 
         # Reject the whole file up front if any row is unusable, before any write.
         # On failure the except below rolls back (nothing written), marks the file
         # ERROR, and logs -- so a bad file is skipped, not partially processed.
-        validate_voyages(mapped)
+        validate_voyages(mapped, set(equipment_ids))
 
         # Resume from where a previous run stopped. The file's LoadStatusId says
         # which phases are already committed, so we skip those and only run what's
