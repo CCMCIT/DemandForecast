@@ -6,7 +6,7 @@ from types import SimpleNamespace
 import pytest
 
 from app.lookups import FieldType
-from app.processing.gpa.mapper import map_row
+from app.processing.voyage.gpa.mapper import map_row
 
 pytestmark = pytest.mark.unit
 

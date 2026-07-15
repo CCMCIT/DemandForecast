@@ -28,8 +28,8 @@ from app.db.session import SessionLocal
 from app.db.models.file import File
 from app.db.models.gpa_file_detail import GpaFileDetail
 from app.db.models.voyage import Voyage
-from app.processing import runner as processing_runner
-from app.processing.status import CANCELLED_THRESHOLD_DAYS
+from app.processing.voyage import runner as processing_runner
+from app.processing.voyage.status import CANCELLED_THRESHOLD_DAYS
 
 pytestmark = pytest.mark.integration
 

@@ -16,7 +16,7 @@ from app.db.models.voyage_details import VoyageDetails
 from app.db.repositories.voyage_repository import VoyageRepository
 from app.db.repositories.voyage_details_repository import VoyageDetailsRepository
 from app.lookups import VoyageStatus
-from app.processing.dto import MappedVoyage
+from app.processing.voyage.dto import MappedVoyage
 
 
 class VoyageWriter:

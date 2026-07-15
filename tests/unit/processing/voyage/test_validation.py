@@ -4,8 +4,8 @@ from datetime import date
 
 import pytest
 
-from app.processing.dto import MappedDetail, MappedVoyage
-from app.processing.validation import validate_voyages, InvalidFileError
+from app.processing.voyage.dto import MappedDetail, MappedVoyage
+from app.processing.voyage.validation import validate_voyages, InvalidFileError
 
 pytestmark = pytest.mark.unit
 

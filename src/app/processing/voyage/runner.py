@@ -30,10 +30,10 @@ from app.db.repositories.mode_repository import ModeRepository
 from app.db.repositories.direction_repository import DirectionRepository
 from app.db.repositories.field_type_value_repository import FieldTypeValueRepository
 from app.db.repositories.voyage_repository import VoyageRepository
-from app.processing.registry import get_processor, has_processor
-from app.processing.status import classify
-from app.processing.validation import validate_voyages
-from app.processing.writer import VoyageWriter
+from app.processing.voyage.registry import get_processor, has_processor
+from app.processing.voyage.status import classify
+from app.processing.voyage.validation import validate_voyages
+from app.processing.voyage.writer import VoyageWriter
 
 
 class AlreadyProcessedError(Exception):
