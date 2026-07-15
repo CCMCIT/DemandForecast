@@ -29,7 +29,7 @@ class CmsGateActivityDetail(Base):
     TruckerName: Mapped[str | None] = mapped_column(NVARCHAR(200))
     EquipCode: Mapped[str | None] = mapped_column(NVARCHAR(50))
     EquipLength: Mapped[int | None] = mapped_column(Integer)
-    LengthMatch: Mapped[bool | None] = mapped_column(BIT)
+    LengthMatchId: Mapped[int | None] = mapped_column(Integer)
     OceanCarrierName: Mapped[str | None] = mapped_column(NVARCHAR(200))
     GateType: Mapped[str | None] = mapped_column(NVARCHAR(100))
     BareChassisFlag: Mapped[bool | None] = mapped_column(BIT)

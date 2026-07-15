@@ -29,7 +29,7 @@ class GateActivityDetail(Base):
     FieldTypeValueTruckerId: Mapped[int | None] = mapped_column(Integer)
     FieldTypeValueEquipTypeId: Mapped[int | None] = mapped_column(Integer)
     EquipLength: Mapped[int | None] = mapped_column(Integer)
-    LengthMatch: Mapped[bool | None] = mapped_column(BIT)
+    LengthMatchId: Mapped[int | None] = mapped_column(Integer)
     FieldTypeValueOceanCarrierId: Mapped[int | None] = mapped_column(Integer)
     GateTypeId: Mapped[int | None] = mapped_column(Integer)
     BareChassisFlag: Mapped[bool | None] = mapped_column(BIT)

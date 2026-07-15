@@ -20,7 +20,7 @@ class MappedGateActivity:
     location_name: str | None
     # Plain measures, copied straight through.
     equip_length: int | None
-    length_match: bool | None
+    length_match_id: int | None
     gate_type_id: int | None
     bare_chassis_flag: bool | None
     container_loaded_flag: bool | None

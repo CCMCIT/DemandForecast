@@ -43,7 +43,7 @@ def _mapped(**overrides) -> MappedGateActivity:
         file_id=7, date=date(2026, 1, 14),
         trucker_name="All Points Transport", equip_code="40STR",
         ocean_carrier_name="Maersk A/S", location_name="GPA - Garden City 3.0",
-        equip_length=40, length_match=True, gate_type_id=1,
+        equip_length=40, length_match_id=1, gate_type_id=1,
         bare_chassis_flag=False, container_loaded_flag=True,
         units=3, transactions=2,
     )
@@ -78,7 +78,7 @@ def test_plain_columns_are_copied():
     session, _ = _write([_mapped()])
     row = session.added[0]
     assert (row.FileId, row.Date) == (7, date(2026, 1, 14))
-    assert (row.EquipLength, row.LengthMatch, row.GateTypeId) == (40, True, 1)
+    assert (row.EquipLength, row.LengthMatchId, row.GateTypeId) == (40, 1, 1)
     assert (row.BareChassisFlag, row.ContainerLoadedFlag) == (False, True)
     assert (row.Units, row.Transactions) == (3, 2)
     assert row.GateActivityStatusId is None

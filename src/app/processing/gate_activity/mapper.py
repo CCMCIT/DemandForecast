@@ -17,7 +17,7 @@ def map_row(detail) -> MappedGateActivity:
         ocean_carrier_name=_clean(detail.OceanCarrierName),
         location_name=_clean(detail.LocationName),
         equip_length=detail.EquipLength,
-        length_match=detail.LengthMatch,
+        length_match_id=detail.LengthMatchId,
         gate_type_id=_gate_type_id(detail.GateType),
         bare_chassis_flag=detail.BareChassisFlag,
         container_loaded_flag=detail.ContainerLoadedFlag,

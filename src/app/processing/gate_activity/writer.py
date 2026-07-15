@@ -72,7 +72,7 @@ class GateActivityWriter:
             FileId=m.file_id,
             Date=m.date,
             EquipLength=m.equip_length,
-            LengthMatch=m.length_match,
+            LengthMatchId=m.length_match_id,
             GateTypeId=m.gate_type_id,
             BareChassisFlag=m.bare_chassis_flag,
             ContainerLoadedFlag=m.container_loaded_flag,
