@@ -36,3 +36,4 @@ class FieldType(IntEnum):
     LOCATION = 5
     ORIGIN_PORT = 6
     DESTINATION_PORT = 7   # DB spells this 'Destination Port' (typo kept in the data)
+    TRUCKER = 8            # gate activity; resolves externally against CMST_Company (like Ocean Carrier)

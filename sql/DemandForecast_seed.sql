@@ -94,7 +94,7 @@ SET IDENTITY_INSERT DemandForecast.Direction_tbl OFF;
 GO
 
 /* ---------- FieldType_tbl ----------
-   The 7 descriptive field types. Ids mirror app.lookups.FieldType. */
+   The 8 descriptive field types. Ids mirror app.lookups.FieldType. */
 
 SET IDENTITY_INSERT DemandForecast.FieldType_tbl ON;
 
@@ -106,7 +106,8 @@ USING (VALUES
     (4, N'Service',        NULL,                         NULL,                NULL,                 NULL,                               0),
     (5, N'Location',       N'dbo.CMST_CompanyLocation',  N'Title',            N'CompanyLocationId', N'StatusId = 1',                    1),
     (6, N'Origin Port',    NULL,                         NULL,                NULL,                 NULL,                               0),
-    (7, N'Destination Port', NULL,                       NULL,                NULL,                 NULL,                               0)
+    (7, N'Destination Port', NULL,                       NULL,                NULL,                 NULL,                               0),
+    (8, N'Trucker',        N'dbo.CMST_Company',          N'ShortDisplayName', N'CompanyId',         N'CompanyStatusId = 1',             1)
 ) AS src (FieldTypeId, FieldType, ExternalTableName, ExternalSearchColumn, ExternalIdColumn, ExternalWhereClause, ExternalNotifFlag)
 ON tgt.FieldTypeId = src.FieldTypeId
 WHEN NOT MATCHED BY TARGET THEN
