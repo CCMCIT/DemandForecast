@@ -16,7 +16,7 @@ def _detail(**overrides):
         FileId=7, Date=date(2026, 1, 14),
         TruckerName="All Points Transport", EquipCode="40STR",
         OceanCarrierName="Maersk A/S", LocationName="GPA - Garden City 3.0",
-        EquipLength=40, LengthMatch=True, GateType="1",
+        EquipLength=40, LengthMatchId=1, GateType="1",
         BareChassisFlag=False, ContainerLoadedFlag=True,
         Units=3, Transactions=2,
     )
@@ -27,7 +27,7 @@ def _detail(**overrides):
 def test_plain_measures_are_copied():
     m = map_row(_detail())
     assert (m.file_id, m.date) == (7, date(2026, 1, 14))
-    assert (m.equip_length, m.length_match) == (40, True)
+    assert (m.equip_length, m.length_match_id) == (40, 1)
     assert (m.bare_chassis_flag, m.container_loaded_flag) == (False, True)
     assert (m.units, m.transactions) == (3, 2)
 
@@ -64,8 +64,8 @@ def test_blank_and_none_names_become_none():
 
 
 def test_null_measures_pass_through_as_none():
-    m = map_row(_detail(EquipLength=None, LengthMatch=None, Units=None, Transactions=None))
+    m = map_row(_detail(EquipLength=None, LengthMatchId=None, Units=None, Transactions=None))
     assert m.equip_length is None
-    assert m.length_match is None
+    assert m.length_match_id is None
     assert m.units is None
     assert m.transactions is None
