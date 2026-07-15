@@ -9,7 +9,7 @@ Future: forecasting on this data.
   The voyage's descriptive fields (Vessel / Ocean Carrier / Service / Location / Origin /
   Destination) are written by the DB proc `DemandForecast.VoyageFieldMap_upsert`, called
   once per field — it find-or-creates `FieldValue_tbl` + `FieldTypeValue_tbl` and upserts
-  `VoyageFieldMap_tbl`. See `processing/writer.py::write_fields`.
+  `VoyageFieldMap_tbl`. See `processing/voyage/writer.py::write_fields`.
 - File type is chosen per file (CLI `--type`, e.g. `GPA`) and drives the reader/mapper via
   explicit registries. One format per type.
 - Many voyages per file.
@@ -77,15 +77,16 @@ project/
 │   │       ├── reader.py            # file -> rows (CSV/Excel)
 │   │       └── loader.py            # rows -> File_tbl + GpaFileDetail_tbl
 │   │
-│   ├── processing/                  # detail rows -> Voyage + VoyageDetails + field maps
-│   │   ├── registry.py              # FileTypeId -> (detail repository, mapper)  (explicit dict)
-│   │   ├── dto.py                   # MappedVoyage / MappedDetail / MappedField (source-agnostic)
-│   │   ├── field_mapping.py         # build_fields(row, spec) -> MappedField[]  (shared helper)
-│   │   ├── writer.py                # MappedVoyage -> DB  (shared, source-agnostic)
-│   │   ├── runner.py                # two-phase orchestration: voyages, then details + fields
-│   │   ├── status.py                # fallen-off classification (Called / Cancelled)
-│   │   └── gpa/
-│   │       └── mapper.py            # GpaFileDetail row -> MappedVoyage  (the ONLY GPA-aware piece)
+│   ├── processing/                  # one folder per domain (voyage, gate_activity, ...)
+│   │   └── voyage/                  # detail rows -> Voyage + VoyageDetails + field maps
+│   │       ├── registry.py          # FileTypeId -> (detail repository, mapper)  (explicit dict)
+│   │       ├── dto.py               # MappedVoyage / MappedDetail / MappedField (source-agnostic)
+│   │       ├── field_mapping.py     # build_fields(row, spec) -> MappedField[]  (shared helper)
+│   │       ├── writer.py            # MappedVoyage -> DB  (source-agnostic across GPA/FPA/...)
+│   │       ├── runner.py            # two-phase orchestration: voyages, then details + fields
+│   │       ├── status.py            # fallen-off classification (Called / Cancelled)
+│   │       └── gpa/
+│   │           └── mapper.py        # GpaFileDetail row -> MappedVoyage  (the ONLY GPA-aware piece)
 │   │
 │   ├── forecast/                    # future forecasting; reads via repositories only
 │   │
@@ -95,11 +96,13 @@ project/
 └── tests/
     ├── integration/                 # hit the live DB (marker: integration)
     └── unit/                        # offline tests (marker: unit); mirrors src/app/
-        └── processing/              # mapper / validation tests
+        └── processing/
+            └── voyage/              # voyage mapper / validation tests
 ```
 
 Top level of `tests/` is the KIND of test (unit / integration). Below it, mirror the
-`src/app/` layout. No other top-level test folders.
+`src/app/` layout (so `processing/voyage/` tests live in `tests/unit/processing/voyage/`).
+No other top-level test folders.
 
 CLI commands (`entrypoints/cli.py`): `ingest`, `ingest-folder`, `process`, `process-next`,
 `process-pending`, `import-status`. Every command takes `--env dev|uat|prod` (default `dev`).
@@ -110,12 +113,15 @@ CLI commands (`entrypoints/cli.py`): `ingest`, `ingest-folder`, `process`, `proc
 - **ingestion/<x>/reader**: parse a file into rows. No DB.
 - **ingestion/<x>/loader**: write rows to `File_tbl` + the detail table.
 - **ingestion/runner** (+ `registry`): orchestrate ingestion; registry maps FileType -> reader + loader.
-- **processing/<x>/mapper**: turn one raw detail row into a `MappedVoyage`. The only source-aware
+- **processing/<domain>/**: one folder per domain (`voyage`, `gate_activity`, ...). Each owns its
+  own mapper/writer/runner; domains do not share a runner (see "Extending later").
+- **processing/voyage/<x>/mapper**: turn one raw detail row into a `MappedVoyage`. The only source-aware
   processing piece; holds the explicit column tables (Mode/Direction/Equip and the descriptive fields).
-- **processing/field_mapping**: shared `build_fields` helper (row + spec -> `MappedField[]`).
-- **processing/writer**: persist a `MappedVoyage` (voyages, details, field maps). Source-agnostic.
-- **processing/runner** (+ `registry`): two-phase orchestration; registry maps FileType -> detail repo + mapper.
-- **processing/status**: classify voyages that fell off the report.
+- **processing/voyage/field_mapping**: `build_fields` helper (row + spec -> `MappedField[]`), shared across
+  voyage sources (GPA/FPA/...).
+- **processing/voyage/writer**: persist a `MappedVoyage` (voyages, details, field maps). Source-agnostic.
+- **processing/voyage/runner** (+ `registry`): two-phase orchestration; registry maps FileType -> detail repo + mapper.
+- **processing/voyage/status**: classify voyages that fell off the report.
 - **entrypoints/cli**: argparse entry; parses args, binds the DB env, delegates to the runners. No logic.
 - **forecast**: future; reads via repositories only. Never imports ingestion or processing internals.
 
@@ -124,25 +130,33 @@ CLI commands (`entrypoints/cli.py`): `ingest`, `ingest-folder`, `process`, `proc
 - One transaction per phase: commit all, or roll back and set `LoadStatusId = ERROR` (99).
 - Comments only when they add value.
 - Follow SOLID principles.
-- Reuse code (e.g. `db/models/base.py`, `ingestion/base.py`, `processing/field_mapping.py`,
-  the shared `processing/writer.py`).
+- Reuse code (e.g. `db/models/base.py`, `ingestion/base.py`, `processing/voyage/field_mapping.py`,
+  the shared `processing/voyage/writer.py`).
 - Registries use explicit dict registration. No auto-discovery.
 
 ## Extending later (no core changes)
-To add a new source (e.g. FPA), reusing the shared writer/runner unchanged:
+Two different kinds of extension:
+
+**New external source of an existing domain** (e.g. FPA, another voyage feed) — reuses the
+shared voyage writer/runner unchanged:
 - add its `FileType` to `lookups.py`
 - `db/models/<x>_file_detail.py` (reflect from live DB) + `db/repositories/<x>_file_detail_repository.py`
 - `ingestion/<x>/reader.py` + `ingestion/<x>/loader.py` + register in `ingestion/registry.py`
-- `processing/<x>/mapper.py` (its own `<X>_COLUMN_MAP` + `<X>_FIELD_MAP`) + register in `processing/registry.py`
+- `processing/voyage/<x>/mapper.py` (its own `<X>_COLUMN_MAP` + `<X>_FIELD_MAP`) + register in `processing/voyage/registry.py`
 
-The field-mapping tables, `field_mapping.build_fields`, and `writer` need no changes — the new
-mapper just declares which columns feed which `FieldType`.
+The field-mapping tables, `voyage/field_mapping.build_fields`, and `voyage/writer` need no changes —
+the new mapper just declares which columns feed which `FieldType`.
+
+**New domain** (e.g. gate_activity — data of a different shape, often internal) — its own
+self-contained folder `processing/<domain>/` with its own mapper/writer/runner. Domains do not
+share a runner; a shared runner is extracted only when a third real domain justifies it (rule of
+three), not pre-emptively.
 
 ## Resolved design decisions (were open items)
 - **Processed marker**: tracked by `LoadStatusId` — 2 = ingested, 3 = voyages, 4 = details,
   5 = field maps (fully processed), 99 = error. `process_file` refuses a file already at 5;
   an interrupted run resumes from its last committed phase (skips 1/2/3 as already done).
-- **Mapping rules**: defined in `processing/gpa/mapper.py` — `GPA_COLUMN_MAP` (Mode/Direction/Equip)
+- **Mapping rules**: defined in `processing/voyage/gpa/mapper.py` — `GPA_COLUMN_MAP` (Mode/Direction/Equip)
   and `GPA_FIELD_MAP` (the descriptive fields). Explicit tables, no name-sniffing.
 - **History tables** (`VoyageHistory_tbl`, `VoyageDetailsHistory_tbl`): SQL Server system-versioned
   (temporal). The DB maintains them; the app relies on the seam, no ORM models.
@@ -157,7 +171,7 @@ mapper just declares which columns feed which `FieldType`.
 2. `db/models` (reflect from live DB, then clean up)
 3. `db/repositories`
 4. `ingestion` (`base`, `gpa/reader`, `gpa/loader`, `registry`) + `ingestion/runner`
-5. `processing` (`dto`, `field_mapping`, `gpa/mapper`, `writer`, `status`, `registry`) + `processing/runner`
+5. `processing/voyage` (`dto`, `field_mapping`, `gpa/mapper`, `writer`, `status`, `registry`) + `processing/voyage/runner`
 6. `entrypoints/cli.py` (+ `run.py`)
 
 ## Working agreement

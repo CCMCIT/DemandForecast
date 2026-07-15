@@ -10,7 +10,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from app.processing.gpa.mapper import GPA_COLUMN_MAP, map_row
+from app.processing.voyage.gpa.mapper import GPA_COLUMN_MAP, map_row
 
 pytestmark = pytest.mark.unit
 

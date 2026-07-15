@@ -8,8 +8,8 @@ named here and resolved to ids by the writer, so this module needs no DB access
 the same shape; the writer and runner are reused unchanged (Open/Closed).
 """
 from app.lookups import FieldType
-from app.processing.dto import MappedDetail, MappedVoyage
-from app.processing.field_mapping import build_fields
+from app.processing.voyage.dto import MappedDetail, MappedVoyage
+from app.processing.voyage.field_mapping import build_fields
 
 # (GpaFileDetail column, equipment name, direction name, mode name, container loaded flag)
 # The column names the container size -- IM_FULL20 is the 20-foot column -- so the

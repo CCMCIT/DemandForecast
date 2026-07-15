@@ -77,8 +77,8 @@ duplicates). Equipment type is encoded on `VoyageDetails.FieldTypeValueEquipType
 
 - **Ingestion:** add a reader + loader under `ingestion/<company>/` and one line in
   `ingestion/registry.py`.
-- **Processing:** add a mapper under `processing/<company>/` (its own column tables) and
-  one line in `processing/registry.py`.
+- **Processing:** add a mapper under `processing/voyage/<company>/` (its own column tables) and
+  one line in `processing/voyage/registry.py`.
 
-The shared files — `session`, `base`, `field_mapping`, both runners, and `writer` —
+The shared files — `session`, `base`, `voyage/field_mapping`, both runners, and `voyage/writer` —
 never change.

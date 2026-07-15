@@ -7,7 +7,7 @@ ERROR, and logs it. Minimal by design: only the fields the pipeline cannot proce
 without. Descriptive fields (Vessel, Line, ...) stay optional; blanks are skipped
 downstream, so they are not validated here.
 """
-from app.processing.dto import MappedVoyage
+from app.processing.voyage.dto import MappedVoyage
 
 
 class InvalidFileError(Exception):

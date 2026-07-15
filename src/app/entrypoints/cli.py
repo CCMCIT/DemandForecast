@@ -20,7 +20,7 @@ from app.config.settings import EXCEL_WATCH_FOLDER, Env, DEFAULT_ENV
 from app.db import session as db_session
 from app.lookups import FileType
 from app.ingestion import runner as ingestion_runner
-from app.processing import runner as processing_runner
+from app.processing.voyage import runner as processing_runner
 
 
 # name -> (one-line description, example). Drives both the numbered --help
