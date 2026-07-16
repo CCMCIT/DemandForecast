@@ -35,7 +35,7 @@ files — the shared flow doesn't change.
 ## Quick start
 
 ```powershell
-cd C:\...\ForecastDemend
+cd C:\...\DemandForecast
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt

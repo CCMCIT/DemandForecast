@@ -50,7 +50,7 @@ or skip activation and call the venv Python directly:
 into `src/`.
 
 ```powershell
-cd C:\...\ForecastDemend
+cd C:\...\DemandForecast
 .\.venv\Scripts\Activate.ps1
 python run.py --help
 ```
@@ -62,7 +62,7 @@ Python only finds `app` if `src/` is on the path. Two valid ways to run — pick
 
 | Command | Run it from | Notes |
 |---------|-------------|-------|
-| `python run.py <command>` | **project root** (`...\ForecastDemend`) | Recommended. `run.py` adds `src/` to the path for you. |
+| `python run.py <command>` | **project root** (`...\DemandForecast`) | Recommended. `run.py` adds `src/` to the path for you. |
 | `python -m app.entrypoints.cli <command>` | **the `src/` folder** | Direct module form. `python -m` only puts the *current* folder on the path, so you must `cd src` first. |
 
 Running `python -m app.entrypoints.cli` from the project root fails with

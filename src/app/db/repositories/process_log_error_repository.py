@@ -2,7 +2,7 @@
 
 write() inserts one error row on its OWN session and commits immediately, so
 the row survives the caller rolling back its own transaction (e.g. a failed
-file load / voyage write). Every row is tagged ErrorProcedure='##ForecastDemand##'
+file load / voyage write). Every row is tagged ErrorProcedure='##DemandForecast##'
 to mark it as this application's.
 """
 import sys
@@ -13,7 +13,7 @@ from app.db.models.process_log_error import ProcessLogError
 from app.db.session import SessionLocal
 
 # Identifies this app's rows in the shared table.
-_ERROR_PROCEDURE = "##ForecastDemand##"
+_ERROR_PROCEDURE = "##DemandForecast##"
 
 
 class ProcessLogErrorRepository:
