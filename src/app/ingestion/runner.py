@@ -95,9 +95,12 @@ def _list_files(folder: str) -> list[str]:
     return [
         os.path.join(folder, name)
         for name in sorted(os.listdir(folder))
-        # Skip Excel temp lock files (~$Book.xlsx), created while a workbook is
-        # open; they aren't real inputs and would only fail ingestion.
-        if os.path.isfile(os.path.join(folder, name)) and not name.startswith("~$")
+        # Only .csv inputs. Skip Excel temp lock files (~$Book.csv), created while a
+        # workbook is open, and any stray non-CSV files (Thumbs.db, .pdf, ...);
+        # they aren't real inputs and would only fail ingestion.
+        if os.path.isfile(os.path.join(folder, name))
+        and name.lower().endswith(".csv")
+        and not name.startswith("~$")
     ]
 
 

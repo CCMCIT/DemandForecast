@@ -30,14 +30,14 @@ Future: forecasting on this data.
 - Python.
 - SQLAlchemy (ORM, manual declarative classes).
 - `pyodbc` driver.
-- File formats: CSV and Excel. Parsing: `pandas` + `openpyxl`.
+- File formats: CSV (exported from Excel), parsed with the stdlib `csv` module.
 - Tests: `pytest`.
 
 ## Folder structure
 ```
 project/
 ├── run.py                           # entry point: `python run.py <command> [--env dev|uat|prod]`
-├── requirements.txt                 # sqlalchemy, pyodbc, pandas, openpyxl, python-dotenv, pytest
+├── requirements.txt                 # sqlalchemy, pyodbc, python-dotenv, pytest
 ├── pytest.ini                       # markers (unit / integration); pythonpath = src
 ├── .env                             # DB_CONNECTION_STRING_{DEV,UAT,PROD}, EXCEL_WATCH_FOLDER
 ├── project-overview.md              # one-page tour for new developers (renders on GitHub)
