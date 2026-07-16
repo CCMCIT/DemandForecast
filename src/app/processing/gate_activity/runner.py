@@ -1,15 +1,16 @@
 """Purpose: process one file's CMS gate-activity staging rows into GateActivityDetail_tbl.
 
-A single committed step: read the staging rows, map them, validate, then replace this
-file's target rows (delete + insert, so reprocessing is idempotent). One transaction for
-the whole file -- commit all, or roll back and log. Unlike the voyage runner there are no
-phases or LoadStatus: gate activity is a straight 1:1 translation, not a multi-phase build.
+A single committed step: read the staging rows, map them, validate, then upsert each row
+by its identity (Date + the nine dimension columns). A row whose identity already exists
+is updated in place (same id, prior version archived by temporal); a new identity is
+inserted. One transaction for the whole file -- commit all, or roll back and log. Unlike
+the voyage runner there are no phases or LoadStatus: gate activity is a straight 1:1
+translation, not a multi-phase build.
 
 - process_file(file_id): process/reprocess one file's gate-activity rows.
 """
 from app.db.session import SessionLocal
 from app.db.repositories.cms_gate_activity_detail_repository import CmsGateActivityDetailRepository
-from app.db.repositories.gate_activity_detail_repository import GateActivityDetailRepository
 from app.db.repositories.gate_type_repository import GateTypeRepository
 from app.db.repositories.process_log_error_repository import ProcessLogErrorRepository
 from app.processing.gate_activity.mapper import map_row
@@ -23,8 +24,9 @@ class InvalidGateActivityError(Exception):
 def process_file(file_id: int) -> int:
     """Map a file's staging rows into GateActivityDetail_tbl and return the row count.
 
-    Reprocessing replaces the file's rows (delete + insert), so a re-run is idempotent.
-    On any failure the whole file rolls back (nothing written) and the error is logged.
+    Upserts by identity, so re-running (or overlapping files in the rolling window) is
+    idempotent: an existing row is updated in place, not duplicated. On any failure the
+    whole file rolls back (nothing written) and the error is logged.
     """
     session = SessionLocal()
     try:
@@ -35,7 +37,6 @@ def process_file(file_id: int) -> int:
         # FK in the DB, so this is the only guard against a bad value slipping through.
         _validate_gate_types(mapped, GateTypeRepository(session).id_set())
 
-        GateActivityDetailRepository(session).delete_by_file_id(file_id)  # reprocess-safe
         GateActivityWriter(session).write_details(mapped)
         session.commit()
         return len(mapped)
