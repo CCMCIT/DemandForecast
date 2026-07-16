@@ -4,8 +4,9 @@ Driven through File_tbl, like the voyage runner: a file carries its FileTypeId a
 LoadStatusId, and processing advances the status. Gate activity has no phases -- it
 reads the file's staging rows, upserts each by its identity (Date + the nine dimension
 columns), and moves the file straight from INSERTED_INTO_FILE_DETAIL (2) to
-INSERTED_INTO_VOYAGE_DETAIL (4). (That status name is shared with voyages and will be
-renamed to a neutral "Inserted into Detail" once both sources use it.)
+INSERTED_INTO_VOYAGE_DETAIL (4), skipping 3 (a voyage phase it does not have). Status 4
+is reused as the terminal "done" marker for now; the voyage-worded status names/values
+will be unified in a later refactor (see process_file).
 
 One transaction per file -- commit all, or roll back, mark the file ERROR, and log. An
 existing identity is updated in place (same id, prior version archived by temporal); a
@@ -54,7 +55,11 @@ def process_file(file_id: int) -> int:
         _validate_gate_types(mapped, GateTypeRepository(session).id_set())
 
         GateActivityWriter(session).write_details(mapped)
-        file.LoadStatusId = LoadStatus.INSERTED_INTO_VOYAGE_DETAIL  # 2 -> 4 (detail written)
+        # Advance 2 -> 4 directly; gate activity has no phase 3, so nothing sets 3.
+        # Status 4 is reused as the terminal "done" marker for now. Arguably this should
+        # be 5 ("fully processed"), since the file IS fully done after the upsert -- kept
+        # at 4 pending a later refactor that unifies the voyage-worded status names.
+        file.LoadStatusId = LoadStatus.INSERTED_INTO_VOYAGE_DETAIL
         session.commit()
         return len(mapped)
     except Exception as exc:
