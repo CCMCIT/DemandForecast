@@ -11,6 +11,7 @@ class FileType(IntEnum):
     GPA = 1              # 'GPA 9-day vessel'
     NCSPA_IMPORTS = 2    # 'NCSPA Imports'
     NCSPA_EXPORTS = 3    # 'NCSPA Exports'
+    GATE_ACTIVITIES = 4  # 'Gate Activities'
 
 
 class LoadStatus(IntEnum):
