@@ -63,6 +63,30 @@ python run.py process-pending
 - Files whose `FileType` has no processor yet (e.g. NCSPA) are **skipped**.
 - Prints a summary (`processed / skipped / failed`) then per-file lines.
 
+### `process-gate-activity` — one file's CMS gate-activity rows → `GateActivityDetail_tbl`
+
+```powershell
+python run.py process-gate-activity --file-id 123
+```
+
+- For a gate-activity file (`FileTypeId = 4`). Reads its `CmsGateActivityDetail` staging
+  rows and **upserts** each by its identity (`Date` + the nine dimension columns): an
+  existing row is updated in place (same id, prior version archived by temporal), a new
+  identity is inserted. No phases.
+- Sets `LoadStatusId = 4` on success (shared "detail written" status). On failure: rolls
+  back, sets `LoadStatusId = 99`, logs.
+- Rejects the file if it isn't `FileTypeId = 4`.
+
+### `process-gate-activity-pending` — every pending gate-activity file
+
+```powershell
+python run.py process-gate-activity-pending
+```
+
+- Processes **every** gate-activity file (`FileTypeId = 4`) at status **2**, each
+  independently — one file's failure doesn't stop the rest.
+- Prints a summary (`processed / failed`).
+
 ### `import-status` — ingestion summary
 
 ```powershell
@@ -84,6 +108,10 @@ python run.py import-status
 
 A file at **5** is refused by `process` (already done). A file left at **3 or 4**
 (interrupted) is resumed. A file at **99** is reprocessed from phase 1.
+
+Gate-activity files (`FileTypeId = 4`) go straight from **2 → 4** — no phase 3 (no field
+maps). Status **4** is shared as the generic "detail written" marker and will be renamed
+neutrally (e.g. *Inserted into Detail*) once both sources use it.
 
 ## End-to-end
 

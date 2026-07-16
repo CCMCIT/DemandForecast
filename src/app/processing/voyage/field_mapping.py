@@ -5,7 +5,7 @@ and this builds the MappedField list from it. GPA and any future source (FPA, ..
 reuse this unchanged; only the spec differs (Open/Closed). Blank/None values are
 skipped, so they produce no FieldValue and no VoyageFieldMap row.
 """
-from app.processing.dto import MappedField
+from app.processing.voyage.dto import MappedField
 
 
 def build_fields(row, spec) -> list[MappedField]:

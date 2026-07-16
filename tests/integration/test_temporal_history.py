@@ -19,7 +19,7 @@ from app.db.models.file import File
 from app.db.models.gpa_file_detail import GpaFileDetail
 from app.db.models.voyage import Voyage
 from app.db.models.voyage_details import VoyageDetails
-from app.processing import runner as processing_runner
+from app.processing.voyage import runner as processing_runner
 
 pytestmark = pytest.mark.integration
 
