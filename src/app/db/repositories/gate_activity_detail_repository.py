@@ -1,4 +1,6 @@
 """Repository for GateActivityDetail_tbl (processed gate-activity target)."""
+from datetime import date
+
 from app.db.models.gate_activity_detail import GateActivityDetail
 
 
@@ -9,9 +11,15 @@ class GateActivityDetailRepository:
     def add_all(self, details: list[GateActivityDetail]) -> None:
         self.session.add_all(details)
 
-    def delete_by_file_id(self, file_id: int) -> None:
-        """Delete a file's target rows. Reprocessing a file is delete-by-FileId then
-        re-insert (the table has no natural key to replace on, unlike Voyage)."""
-        self.session.query(GateActivityDetail).filter(
-            GateActivityDetail.FileId == file_id
-        ).delete(synchronize_session=False)
+    def get_by_dates(self, dates: set[date]) -> list[GateActivityDetail]:
+        """Existing target rows whose Date is in `dates`. Loaded once so the writer
+        can match incoming rows against them by identity in memory. Scoped to the
+        batch's dates (Date is part of the identity), so it never loads the whole
+        table."""
+        if not dates:
+            return []
+        return (
+            self.session.query(GateActivityDetail)
+            .filter(GateActivityDetail.Date.in_(dates))
+            .all()
+        )

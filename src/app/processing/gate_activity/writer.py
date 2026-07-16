@@ -1,14 +1,20 @@
-"""Purpose: persist MappedGateActivity rows into GateActivityDetail_tbl.
+"""Purpose: upsert MappedGateActivity rows into GateActivityDetail_tbl.
 
 Each of the four descriptive names (Trucker / Equipment / Ocean Carrier / Location) is
 resolved to a FieldTypeValue id under its FieldType, and the id lands in the matching
 column. Resolution goes through the DB proc GateActivityFieldTypeValue_upsert (find-or-
 create), so a value new to the dimension is created, not rejected -- the sets are open.
 
-The resolver caches per run: each distinct (FieldType, value) hits the proc once, so a
-file of many rows over few truckers/carriers costs few proc calls, not one per row. The
-writer does no commit -- the runner owns the transaction (same contract as the voyage
-writer). A NULL/blank name resolves to None: no proc call, the column is left NULL.
+A row's IDENTITY is its 10 columns (Date + the nine dimension columns); Units,
+Transactions and FileId are the mutable payload. On write, a row whose identity already
+exists is UPDATED in place -- same GateActivityDetailId, temporal archives the prior
+version -- and only its payload changes. A new identity is inserted. Within one batch a
+repeated identity is collapsed last-wins (the DB unique constraint forbids two live rows
+with the same identity anyway).
+
+The resolver caches per run: each distinct (FieldType, value) hits the proc once. The
+writer does no commit -- the runner owns the transaction. A NULL/blank name resolves to
+None: no proc call, the column left NULL (and None matches None in the identity).
 """
 from sqlalchemy import text
 
@@ -24,6 +30,24 @@ GATE_ACTIVITY_FIELD_MAP = [
     ("ocean_carrier_name", FieldType.OCEAN_CARRIER,  "FieldTypeValueOceanCarrierId"),
     ("location_name",      FieldType.LOCATION,       "FieldTypeValueLocationId"),
 ]
+
+# The columns that identify a row (Date + the nine dimensions). Two rows with the same
+# values here are the same gate movement; everything else is mutable payload.
+IDENTITY_COLUMNS = [
+    "Date",
+    "FieldTypeValueTruckerId",
+    "FieldTypeValueEquipTypeId",
+    "EquipLength",
+    "LengthMatchId",
+    "FieldTypeValueOceanCarrierId",
+    "GateTypeId",
+    "BareChassisFlag",
+    "ContainerLoadedFlag",
+    "FieldTypeValueLocationId",
+]
+
+# The columns updated when an identity already exists.
+PAYLOAD_COLUMNS = ["FileId", "Units", "Transactions"]
 
 
 class FieldTypeValueResolver:
@@ -54,14 +78,41 @@ class FieldTypeValueResolver:
         ).scalar()
 
 
+def _identity(row) -> tuple:
+    """The 10-column identity of a GateActivityDetail (existing row or freshly built)."""
+    return tuple(getattr(row, column) for column in IDENTITY_COLUMNS)
+
+
 class GateActivityWriter:
-    def __init__(self, session, resolver: FieldTypeValueResolver | None = None):
-        self.details = GateActivityDetailRepository(session)
+    def __init__(self, session, resolver: FieldTypeValueResolver | None = None,
+                 details: GateActivityDetailRepository | None = None):
+        self.details = details or GateActivityDetailRepository(session)
         self.resolver = resolver or FieldTypeValueResolver(session)
 
     def write_details(self, mapped: list[MappedGateActivity]) -> None:
-        """Resolve each row's names and insert the GateActivityDetail rows (1:1)."""
-        self.details.add_all([self._to_detail(m) for m in mapped])
+        """Upsert each row by its identity: update the payload of an existing row,
+        or insert a new one."""
+        # Build the target rows and collapse within-batch duplicates (last-wins), so
+        # we never try to insert two rows with the same identity.
+        incoming: dict[tuple, GateActivityDetail] = {}
+        for m in mapped:
+            row = self._to_detail(m)
+            incoming[_identity(row)] = row
+
+        existing = {
+            _identity(row): row
+            for row in self.details.get_by_dates({d.Date for d in incoming.values()})
+        }
+
+        to_insert = []
+        for identity, row in incoming.items():
+            current = existing.get(identity)
+            if current is None:
+                to_insert.append(row)
+            else:
+                for column in PAYLOAD_COLUMNS:            # update payload in place;
+                    setattr(current, column, getattr(row, column))  # identity unchanged
+        self.details.add_all(to_insert)
 
     def _to_detail(self, m: MappedGateActivity) -> GateActivityDetail:
         resolved_ids = {
