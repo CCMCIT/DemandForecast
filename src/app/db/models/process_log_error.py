@@ -1,7 +1,7 @@
 """Model for ADMIN.Process_Log_Error_tbl. Reflected from the live DB.
 
 Shared team error-log table used by several unrelated apps in the same DB.
-This project writes rows tagged ErrorProcedure = '##ForecastDemand##' so its
+This project writes rows tagged ErrorProcedure = '##DemandForecast##' so its
 errors can be filtered out from the others.
 
 Only the columns this app populates are set; the rest stay NULL by design
@@ -28,6 +28,6 @@ class ProcessLogError(Base):
     ErrorState: Mapped[int | None] = mapped_column(Integer)           # left NULL
     ErrorSeverity: Mapped[int | None] = mapped_column(Integer)        # left NULL
     ErrorLine: Mapped[int | None] = mapped_column(Integer)            # left NULL
-    ErrorProcedure: Mapped[str | None] = mapped_column(VARCHAR)       # '##ForecastDemand##'
+    ErrorProcedure: Mapped[str | None] = mapped_column(VARCHAR)       # '##DemandForecast##'
     ErrorMessage: Mapped[str | None] = mapped_column(VARCHAR)         # str(exc)
     ErrorDateTime: Mapped[datetime | None] = mapped_column(DATETIME)  # nullable, no default -> set in code

@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/ForecastDemand.iml" filepath="$PROJECT_DIR$/.idea/ForecastDemand.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/DemandForecast.iml" filepath="$PROJECT_DIR$/.idea/DemandForecast.iml" />
     </modules>
   </component>
 </project>
