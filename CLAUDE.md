@@ -105,7 +105,8 @@ Top level of `tests/` is the KIND of test (unit / integration). Below it, mirror
 No other top-level test folders.
 
 CLI commands (`entrypoints/cli.py`): `ingest`, `ingest-folder`, `process`, `process-next`,
-`process-pending`, `import-status`. Every command takes `--env dev|uat|prod` (default `dev`).
+`process-pending`, `process-gate-activity`, `process-gate-activity-pending`, `import-status`.
+Every command takes `--env dev|uat|prod` (default `dev`).
 
 ## Layer responsibilities
 - **models**: DB-first ORM definitions. Reflect existing tables; no logic.
