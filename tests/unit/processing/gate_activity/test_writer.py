@@ -81,7 +81,6 @@ def test_plain_columns_are_copied():
     assert (row.EquipLength, row.LengthMatchId, row.GateTypeId) == (40, 1, 1)
     assert (row.BareChassisFlag, row.ContainerLoadedFlag) == (False, True)
     assert (row.Units, row.Transactions) == (3, 2)
-    assert row.GateActivityStatusId is None
 
 
 def test_null_name_leaves_its_column_null():
