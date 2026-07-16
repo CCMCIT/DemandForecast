@@ -78,6 +78,5 @@ class GateActivityWriter:
             ContainerLoadedFlag=m.container_loaded_flag,
             Units=m.units,
             Transactions=m.transactions,
-            GateActivityStatusId=None,  # no source yet; left NULL by design
             **resolved_ids,
         )

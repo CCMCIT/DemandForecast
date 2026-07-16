@@ -2,7 +2,7 @@
 
 The processed gate-activity target: one row per CMS staging row (1:1, no unpivot).
 The descriptive fields are resolved to FieldTypeValue ids here; Gate Type to its
-lookup id. GateActivityStatusId is left NULL for now (no source yet).
+lookup id.
 
 The FieldTypeValue*Id / GateTypeId columns are plain Integer: the DB has no FK on
 them, so the ORM mirrors that (do not invent constraints the DB does not have).
@@ -37,4 +37,3 @@ class GateActivityDetail(Base):
     FieldTypeValueLocationId: Mapped[int | None] = mapped_column(Integer)
     Units: Mapped[int | None] = mapped_column(Integer)
     Transactions: Mapped[int | None] = mapped_column(Integer)
-    GateActivityStatusId: Mapped[int | None] = mapped_column(Integer)
