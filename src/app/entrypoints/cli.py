@@ -10,6 +10,7 @@ by a worker or API entrypoint without change. Commands:
   process-next    --count <n>                       the next n pending files -> Voyage(+Details)
   process-pending                                   every file with LoadStatusId=2 -> Voyage(+Details)
   process-gate-activity --file-id <id>              one file's CMS rows -> GateActivityDetail_tbl
+  process-gate-activity-pending                     every gate-activity file at LoadStatusId=2
 
 Every command also accepts --env <dev|uat|prod> to pick the target database
 (default: dev). The numbered listing shown by `--help` is generated from _COMMANDS.
@@ -51,6 +52,10 @@ _COMMANDS = {
     "process-gate-activity": (
         "Map one file's CMS gate-activity rows into GateActivityDetail_tbl.",
         "python run.py process-gate-activity --file-id 123",
+    ),
+    "process-gate-activity-pending": (
+        "Process every gate-activity file with LoadStatusId=2 (Inserted into FileDetail).",
+        "python run.py process-gate-activity-pending",
     ),
     "import-status": (
         "Show how many files were imported successfully out of the total.",
@@ -152,6 +157,8 @@ def main(argv=None) -> None:
         "--file-id", required=True, type=int, dest="file_id", help="FileId to process"
     )
 
+    _add_command(sub, "process-gate-activity-pending", parents=[common])
+
     _add_command(sub, "import-status", parents=[common])
 
     args = parser.parse_args(argv)
@@ -178,6 +185,7 @@ _START_MESSAGES = {
     "process-next": "Processing...",
     "process-pending": "Processing...",
     "process-gate-activity": "Processing...",
+    "process-gate-activity-pending": "Processing...",
     "import-status": "Checking...",
 }
 
@@ -226,6 +234,13 @@ def run_command(args) -> None:
         print(f"  processing FileId={args.file_id}")
         count = gate_activity_runner.process_file(args.file_id)
         print(f"Processed {count} gate-activity row(s) for FileId={args.file_id}")
+    elif args.command == "process-gate-activity-pending":
+        result = gate_activity_runner.process_pending()
+        print(
+            f"Gate activity pending run complete. "
+            f"processed={len(result['processed'])} "
+            f"failed={len(result['failed'])}"
+        )
     elif args.command == "import-status":
         summary = ingestion_runner.import_summary()
         print(
