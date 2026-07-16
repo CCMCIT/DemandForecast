@@ -9,7 +9,9 @@ from datetime import date, time
 
 @dataclass
 class MappedDetail:
-    field_type_value_id: int | None
+    """One measure of a voyage. Equipment/Mode/Direction are carried by name; the
+    writer resolves each to its id, so mappers stay free of database ids."""
+    equipment_name: str | None   # e.g. '20CH'; None for empties (no equipment type)
     mode_name: str
     direction_name: str
     container_loaded_flag: int

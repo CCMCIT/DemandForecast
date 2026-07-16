@@ -1,15 +1,38 @@
 /* =====================================================================
    DemandForecast — idempotent seed of the lookup tables.
-   Seeds LoadStatus_tbl, VoyageStatus_tbl, Mode_tbl, Direction_tbl and
-   FieldType_tbl with their exact ids (IDENTITY_INSERT ON) so code that
-   references them by id (see src/app/lookups.py) and the writer, which
-   resolves Mode/Direction by NAME, both line up.
+   Seeds FileType_tbl, LoadStatus_tbl, VoyageStatus_tbl, Mode_tbl,
+   Direction_tbl and FieldType_tbl with their exact ids (IDENTITY_INSERT ON)
+   so code that references them by id (see src/app/lookups.py) and the writer,
+   which resolves Mode/Direction by NAME, both line up.
 
    Safe to re-run: each MERGE inserts only the rows that are missing
    (WHEN NOT MATCHED BY TARGET), so existing rows are left untouched.
 
+   Gate-activity lookups (FileType 4, GateType, LengthMatch_tbl) are seeded
+   separately in DemandForecast_GateActivity_seed.sql.
+
    Run after DemandForecast_schema.sql.
    ===================================================================== */
+
+/* ---------- FileType_tbl ----------
+   The file sources. Ids mirror app.lookups.FileType. Gate Activities (4) is
+   seeded in DemandForecast_GateActivity_seed.sql. */
+
+SET IDENTITY_INSERT DemandForecast.FileType_tbl ON;
+
+MERGE DemandForecast.FileType_tbl AS tgt
+USING (VALUES
+    (1, N'GPA 9-day vessel'),
+    (2, N'NCSPA Imports'),
+    (3, N'NCSPA Exports')
+) AS src (FileTypeId, Name)
+ON tgt.FileTypeId = src.FileTypeId
+WHEN NOT MATCHED BY TARGET THEN
+    INSERT (FileTypeId, Name)
+    VALUES (src.FileTypeId, src.Name);
+
+SET IDENTITY_INSERT DemandForecast.FileType_tbl OFF;
+GO
 
 /* ---------- LoadStatus_tbl ----------
    Ids mirror app.lookups.LoadStatus. 1..5 track a file through the
@@ -94,7 +117,7 @@ SET IDENTITY_INSERT DemandForecast.Direction_tbl OFF;
 GO
 
 /* ---------- FieldType_tbl ----------
-   The 7 descriptive field types. Ids mirror app.lookups.FieldType. */
+   The 8 descriptive field types. Ids mirror app.lookups.FieldType. */
 
 SET IDENTITY_INSERT DemandForecast.FieldType_tbl ON;
 
@@ -106,7 +129,8 @@ USING (VALUES
     (4, N'Service',        NULL,                         NULL,                NULL,                 NULL,                               0),
     (5, N'Location',       N'dbo.CMST_CompanyLocation',  N'Title',            N'CompanyLocationId', N'StatusId = 1',                    1),
     (6, N'Origin Port',    NULL,                         NULL,                NULL,                 NULL,                               0),
-    (7, N'Destination Port', NULL,                       NULL,                NULL,                 NULL,                               0)
+    (7, N'Destination Port', NULL,                       NULL,                NULL,                 NULL,                               0),
+    (8, N'Trucker',        N'dbo.CMST_Company',          N'ShortDisplayName', N'CompanyId',         N'CompanyStatusId = 1',             1)
 ) AS src (FieldTypeId, FieldType, ExternalTableName, ExternalSearchColumn, ExternalIdColumn, ExternalWhereClause, ExternalNotifFlag)
 ON tgt.FieldTypeId = src.FieldTypeId
 WHEN NOT MATCHED BY TARGET THEN

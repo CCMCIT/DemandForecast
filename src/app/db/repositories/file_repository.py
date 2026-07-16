@@ -43,3 +43,13 @@ class FileRepository:
             .order_by(File.FileId)
             .all()
         )
+
+    def get_by_type_and_status(self, file_type_id: int, load_status_id: int) -> list[File]:
+        """Files of one type in one load status, oldest first. Used to pick the
+        pending files of a single source (e.g. gate activity: type 4, status 2)."""
+        return (
+            self.session.query(File)
+            .filter(File.FileTypeId == file_type_id, File.LoadStatusId == load_status_id)
+            .order_by(File.FileId)
+            .all()
+        )

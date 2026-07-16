@@ -11,6 +11,7 @@ class FileType(IntEnum):
     GPA = 1              # 'GPA 9-day vessel'
     NCSPA_IMPORTS = 2    # 'NCSPA Imports'
     NCSPA_EXPORTS = 3    # 'NCSPA Exports'
+    GATE_ACTIVITIES = 4  # 'Gate Activities'
 
 
 class LoadStatus(IntEnum):
@@ -36,3 +37,4 @@ class FieldType(IntEnum):
     LOCATION = 5
     ORIGIN_PORT = 6
     DESTINATION_PORT = 7   # DB spells this 'Destination Port' (typo kept in the data)
+    TRUCKER = 8            # gate activity; resolves externally against CMST_Company (like Ocean Carrier)

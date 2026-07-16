@@ -5,7 +5,7 @@ writer and the runner never change (Open/Closed). get_processor is the stable co
 """
 from app.lookups import FileType
 from app.db.repositories.gpa_file_detail_repository import GpaFileDetailRepository
-from app.processing.gpa.mapper import map_row as gpa_map_row
+from app.processing.voyage.gpa.mapper import map_row as gpa_map_row
 
 REGISTRY = {
     FileType.GPA: (GpaFileDetailRepository, gpa_map_row),
