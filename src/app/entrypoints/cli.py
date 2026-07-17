@@ -4,8 +4,8 @@ Parses arguments and delegates to the ingestion/processing runners. It holds NO
 business logic (Single Responsibility) so the same flows can later be triggered
 by a worker or API entrypoint without change. Commands:
 
-  ingest          --path <file> --type <FileType>   file on disk -> File_tbl + detail table
-  ingest-folder   --type <FileType> [--folder <dir>] every file in a folder -> File_tbl + detail table
+  ingest          --path <file> --type <FileType>   file on disk -> Load_tbl + detail table
+  ingest-folder   --type <FileType> [--folder <dir>] every file in a folder -> Load_tbl + detail table
   process         --file-id <id>                    one loaded file -> Voyage_tbl + VoyageDetails_tbl
   process-next    --count <n>                       the next n pending files -> Voyage(+Details)
   process-pending                                   every file with LoadStatusId=2 -> Voyage(+Details)
@@ -30,7 +30,7 @@ from app.processing.gate_activity import runner as gate_activity_runner
 # listing and each subcommand's own description. Keep in command order.
 _COMMANDS = {
     "ingest": (
-        "Load a file into File_tbl and its company detail table.",
+        "Load a file into Load_tbl and its company detail table.",
         'python run.py ingest --path "C:/files/NineDayVessel.csv" --type GPA',
     ),
     "ingest-folder": (
@@ -142,7 +142,7 @@ def main(argv=None) -> None:
     )
 
     process = _add_command(sub, "process", parents=[common])
-    process.add_argument("--file-id", required=True, type=int, dest="file_id", help="FileId to process")
+    process.add_argument("--file-id", required=True, type=int, dest="file_id", help="LoadId to process")
 
     process_next = _add_command(sub, "process-next", parents=[common])
     process_next.add_argument(
@@ -154,7 +154,7 @@ def main(argv=None) -> None:
 
     process_gate_activity = _add_command(sub, "process-gate-activity", parents=[common])
     process_gate_activity.add_argument(
-        "--file-id", required=True, type=int, dest="file_id", help="FileId to process"
+        "--file-id", required=True, type=int, dest="file_id", help="LoadId to process"
     )
 
     _add_command(sub, "process-gate-activity-pending", parents=[common])
@@ -199,7 +199,7 @@ def run_command(args) -> None:
     if args.command == "ingest":
         file_type_id = FileType[args.file_type]
         file_id = ingestion_runner.run(file_type_id, args.path)
-        print(f"Ingested '{args.path}' as {args.file_type}. FileId={file_id}")
+        print(f"Ingested '{args.path}' as {args.file_type}. LoadId={file_id}")
     elif args.command == "ingest-folder":
         file_type_id = FileType[args.file_type]
         folder = args.folder or EXCEL_WATCH_FOLDER
@@ -211,9 +211,9 @@ def run_command(args) -> None:
             f"failed={len(result['failed'])}"
         )
     elif args.command == "process":
-        print(f"  processing FileId={args.file_id}")
+        print(f"  processing LoadId={args.file_id}")
         count = processing_runner.process_file(args.file_id, progress=_print_progress)
-        print(f"Processed {count} detail row(s) for FileId={args.file_id}")
+        print(f"Processed {count} detail row(s) for LoadId={args.file_id}")
     elif args.command == "process-next":
         result = processing_runner.process_next(args.count, progress=_print_progress)
         print(
@@ -231,9 +231,9 @@ def run_command(args) -> None:
             f"failed={len(result['failed'])}"
         )
     elif args.command == "process-gate-activity":
-        print(f"  processing FileId={args.file_id}")
+        print(f"  processing LoadId={args.file_id}")
         count = gate_activity_runner.process_file(args.file_id)
-        print(f"Processed {count} gate-activity row(s) for FileId={args.file_id}")
+        print(f"Processed {count} gate-activity row(s) for LoadId={args.file_id}")
     elif args.command == "process-gate-activity-pending":
         result = gate_activity_runner.process_pending()
         print(
@@ -252,21 +252,21 @@ def run_command(args) -> None:
 
 
 def _print_progress(event: str, **data) -> None:
-    """Live per-file output for process-pending. Verbs padded so FileId lines up."""
+    """Live per-file output for process-pending. Verbs padded so LoadId lines up."""
     if event == "start":
         print(f"{data['total']} file(s) to process.")
     elif event == "processing":
         print()
-        print(f"  {'processing':<10} FileId={data['file_id']}")
+        print(f"  {'processing':<10} LoadId={data['file_id']}")
     elif event == "phase":
         print(f"    phase {data['number']} ({data['name']}): {data['state']}")
     elif event == "processed":
         print()
-        print(f"  {'processed':<10} FileId={data['file_id']} ({data['count']} detail rows)")
+        print(f"  {'processed':<10} LoadId={data['file_id']} ({data['count']} detail rows)")
     elif event == "skipped":
-        print(f"  {'skipped':<10} FileId={data['file_id']} (no processor for its FileType)")
+        print(f"  {'skipped':<10} LoadId={data['file_id']} (no processor for its FileType)")
     elif event == "failed":
-        print(f"  {'failed':<10} FileId={data['file_id']}: {data['error']}")
+        print(f"  {'failed':<10} LoadId={data['file_id']}: {data['error']}")
 
 
 def _print_folder_progress(event: str, **data) -> None:
@@ -277,7 +277,7 @@ def _print_folder_progress(event: str, **data) -> None:
     elif event == "ingesting":
         print(f"  {'ingesting':<10} {data['file_name']}")
     elif event == "ingested":
-        print(f"  {'ingested':<10} {data['file_name']} -> FileId={data['file_id']}")
+        print(f"  {'ingested':<10} {data['file_name']} -> LoadId={data['file_id']}")
     elif event == "skipped":
         print(f"  {'skipped':<10} {data['file_name']} (already inserted)")
     elif event == "failed":

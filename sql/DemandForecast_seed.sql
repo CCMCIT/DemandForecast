@@ -25,11 +25,11 @@ USING (VALUES
     (1, N'GPA 9-day vessel'),
     (2, N'NCSPA Imports'),
     (3, N'NCSPA Exports')
-) AS src (FileTypeId, Name)
-ON tgt.FileTypeId = src.FileTypeId
+) AS src (LoadTypeId, Name)
+ON tgt.LoadTypeId = src.LoadTypeId
 WHEN NOT MATCHED BY TARGET THEN
-    INSERT (FileTypeId, Name)
-    VALUES (src.FileTypeId, src.Name);
+    INSERT (LoadTypeId, Name)
+    VALUES (src.LoadTypeId, src.Name);
 
 SET IDENTITY_INSERT DemandForecast.FileType_tbl OFF;
 GO

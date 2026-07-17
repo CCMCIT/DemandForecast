@@ -122,7 +122,7 @@ class VoyageWriter:
         if existing is None:
             return self.voyages.add(
                 Voyage(
-                    FileId=mapped.file_id,
+                    LoadId=mapped.file_id,
                     Voyage=mapped.voyage,
                     WORK_DATE=mapped.work_date,
                     WorkTime=mapped.work_time,
@@ -131,7 +131,7 @@ class VoyageWriter:
             )  # flush -> VoyageId
 
         # On the report again -> back to ToCall (resets a prior Called/Cancelled).
-        existing.FileId = mapped.file_id
+        existing.LoadId = mapped.file_id
         existing.WORK_DATE = mapped.work_date
         existing.WorkTime = mapped.work_time
         existing.VoyageStatusId = VoyageStatus.TO_CALL

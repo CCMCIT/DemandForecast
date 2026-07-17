@@ -11,7 +11,7 @@ longer contains it) it is classified from its OWN last appearance:
 
 If it appears again on a later file it goes back to ToCall.
 
-These tests hit the live DB. FileName and VOYAGE are tagged with a random GUID so
+These tests hit the live DB. SourceName and VOYAGE are tagged with a random GUID so
 runs never collide; no cleanup is performed (rows are left behind on purpose).
 
 Note: processing any file classifies every ToCall voyage that is absent from it,
@@ -25,7 +25,7 @@ import pytest
 
 from app.lookups import FileType, LoadStatus, VoyageStatus
 from app.db.session import SessionLocal
-from app.db.models.file import File
+from app.db.models.load import Load
 from app.db.models.gpa_file_detail import GpaFileDetail
 from app.db.models.voyage import Voyage
 from app.processing.voyage import runner as processing_runner
@@ -42,20 +42,20 @@ REPORTED_BEYOND_THRESHOLD = "07022025"   # 2 Jul: W - R = 2 days -> Cancelled
 
 
 def _seed_file(file_name: str, voyage: str, reported: str) -> int:
-    """Insert a File (ready to process) + one GpaFileDetail for `voyage`. Returns
-    the FileId. WORK_DATE is fixed; REPORTED is what drives the classification."""
+    """Insert a Load (ready to process) + one GpaFileDetail for `voyage`. Returns
+    the LoadId. WORK_DATE is fixed; REPORTED is what drives the classification."""
     session = SessionLocal()
     try:
-        file = File(
-            FileName=file_name,
-            FileTypeId=FileType.GPA,
+        file = Load(
+            SourceName=file_name,
+            LoadTypeId=FileType.GPA,
             LoadStatusId=LoadStatus.INSERTED_INTO_FILE_DETAIL,
         )
         session.add(file)
-        session.flush()  # assign FileId
+        session.flush()  # assign LoadId
         session.add(
             GpaFileDetail(
-                FileId=file.FileId,
+                LoadId=file.LoadId,
                 TERMINAL="ITEST",
                 VESSEL="ITEST VESSEL",
                 VOYAGE=voyage,
@@ -66,7 +66,7 @@ def _seed_file(file_name: str, voyage: str, reported: str) -> int:
             )
         )
         session.commit()
-        return file.FileId
+        return file.LoadId
     finally:
         session.close()
 

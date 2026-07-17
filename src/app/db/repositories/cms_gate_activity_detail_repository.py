@@ -12,6 +12,6 @@ class CmsGateActivityDetailRepository:
     def get_by_file_id(self, file_id: int) -> list[CmsGateActivityDetail]:
         return (
             self.session.query(CmsGateActivityDetail)
-            .filter(CmsGateActivityDetail.FileId == file_id)
+            .filter(CmsGateActivityDetail.LoadId == file_id)
             .all()
         )

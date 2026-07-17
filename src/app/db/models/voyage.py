@@ -17,7 +17,7 @@ class Voyage(Base):
     __table_args__ = {"schema": "DemandForecast"}
 
     VoyageId: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    FileId: Mapped[int] = mapped_column(ForeignKey("DemandForecast.File_tbl.FileId"))
+    LoadId: Mapped[int] = mapped_column(ForeignKey("DemandForecast.Load_tbl.LoadId"))
     Voyage: Mapped[str] = mapped_column(NVARCHAR(100))
     WORK_DATE: Mapped[date | None] = mapped_column(Date)
     WorkTime: Mapped[time | None] = mapped_column(Time)

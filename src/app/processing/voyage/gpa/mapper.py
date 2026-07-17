@@ -42,7 +42,7 @@ GPA_FIELD_MAP = [
 
 def map_row(detail) -> MappedVoyage:
     voyage = MappedVoyage(
-        file_id=detail.FileId,
+        file_id=detail.LoadId,
         voyage=detail.VOYAGE,
         work_date=detail.WORK_DATE,
         work_time=detail.WORKTIME,

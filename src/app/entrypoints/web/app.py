@@ -143,7 +143,7 @@ def _build_argv(command: str, env: Env):
         upload = request.files.get("file")
         if upload is None or upload.filename == "":
             raise ValueError("No file selected.")
-        # Save the upload under its own name so File_tbl.FileName is meaningful.
+        # Save the upload under its own name so Load_tbl.SourceName is meaningful.
         tmp_dir = tempfile.mkdtemp(prefix="demandforecast_ui_")
         path = os.path.join(tmp_dir, secure_filename(upload.filename))
         upload.save(path)

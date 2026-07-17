@@ -24,7 +24,7 @@ class CmsGateActivityDetail(Base):
     CmsGateActivityDetailId: Mapped[int] = mapped_column(
         Integer, primary_key=True, autoincrement=True
     )
-    FileId: Mapped[int] = mapped_column(ForeignKey("DemandForecast.File_tbl.FileId"))
+    LoadId: Mapped[int] = mapped_column(ForeignKey("DemandForecast.Load_tbl.LoadId"))
     Date: Mapped[date] = mapped_column(Date)
     TruckerName: Mapped[str | None] = mapped_column(NVARCHAR(200))
     EquipCode: Mapped[str | None] = mapped_column(NVARCHAR(50))

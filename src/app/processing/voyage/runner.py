@@ -2,7 +2,7 @@
 and the field-mapping tables.
 
 Shared flow, agnostic to the source: the detail repository and mapper are chosen by
-the File's FileTypeId via the registry. Each file is processed in three committed
+the Load's LoadTypeId via the registry. Each file is processed in three committed
 phases, each atomic across the whole file, so an interrupted run resumes from the
 last completed phase without losing or duplicating work:
 
@@ -24,7 +24,7 @@ Process_Log_Error_tbl; a file left at ERROR is reprocessed from phase 1.
 """
 from app.lookups import FieldType, LoadStatus
 from app.db.session import SessionLocal, session_scope
-from app.db.repositories.file_repository import FileRepository
+from app.db.repositories.load_repository import LoadRepository
 from app.db.repositories.process_log_error_repository import ProcessLogErrorRepository
 from app.db.repositories.mode_repository import ModeRepository
 from app.db.repositories.direction_repository import DirectionRepository
@@ -45,8 +45,8 @@ def process_file(file_id: int, progress=None) -> int:
 
     session = SessionLocal()
     try:
-        file = FileRepository(session).get(file_id)
-        detail_repo_cls, map_row = get_processor(file.FileTypeId)
+        file = LoadRepository(session).get(file_id)
+        detail_repo_cls, map_row = get_processor(file.LoadTypeId)
         rows = detail_repo_cls(session).get_by_file_id(file_id)
 
         # The lookup maps are loaded once per file (name -> id) and handed to the
@@ -117,7 +117,7 @@ def process_file(file_id: int, progress=None) -> int:
     except Exception as exc:
         session.rollback()
         _mark_error(file_id)
-        ProcessLogErrorRepository.write(f"Process failed for FileId {file_id}: {exc}")
+        ProcessLogErrorRepository.write(f"Process failed for LoadId {file_id}: {exc}")
         raise
     finally:
         session.close()
@@ -131,13 +131,13 @@ def process_pending(progress=None, limit=None) -> dict:
     `limit` caps how many files are taken (the first N in priority order); None
     means all. process_next is the named entry point for the "next N files" case."""
     with session_scope() as session:
-        repo = FileRepository(session)
+        repo = LoadRepository(session)
         # Most-complete first so interrupted files finish before new ones start:
         # status 4 (details in, field maps not) -> 3 (voyages in, details not) -> 2 (new).
         files = repo.get_by_load_status(LoadStatus.INSERTED_INTO_VOYAGE_DETAIL) + \
             repo.get_by_load_status(LoadStatus.INSERTED_INTO_VOYAGE) + \
             repo.get_by_load_status(LoadStatus.INSERTED_INTO_FILE_DETAIL)
-        targets = [(f.FileId, f.FileTypeId) for f in files]
+        targets = [(f.LoadId, f.LoadTypeId) for f in files]
         if limit is not None:
             targets = targets[:limit]  # the next N in priority order
 
@@ -180,10 +180,10 @@ def _classify_fallen_off(session, in_file_voyages, detail_repo_cls, file_id) -> 
         detail_repo = detail_repo_cls(session)
         voyages = VoyageRepository(session).get_tocall_not_in(in_file_voyages)
         reported_dates = detail_repo.get_reported_dates(
-            [(v.FileId, v.Voyage) for v in voyages]
+            [(v.LoadId, v.Voyage) for v in voyages]
         )
         for voyage in voyages:
-            reported_date = reported_dates.get((voyage.FileId, voyage.Voyage))
+            reported_date = reported_dates.get((voyage.LoadId, voyage.Voyage))
             if reported_date is None or voyage.WORK_DATE is None:
                 continue  # cannot classify without both dates
             voyage.VoyageStatusId = classify(voyage.WORK_DATE, reported_date)
@@ -191,7 +191,7 @@ def _classify_fallen_off(session, in_file_voyages, detail_repo_cls, file_id) -> 
     except Exception as exc:
         session.rollback()
         ProcessLogErrorRepository.write(
-            f"Fallen-off classification failed after FileId {file_id}: {exc}"
+            f"Fallen-off classification failed after LoadId {file_id}: {exc}"
         )
 
 
@@ -205,19 +205,19 @@ def _reject_if_already_processed(file_id: int) -> None:
     transaction, so it neither marks the file ERROR nor writes an error-log row —
     it's a validation rejection, not a failure."""
     with session_scope() as session:
-        file = FileRepository(session).get(file_id)
+        file = LoadRepository(session).get(file_id)
     if file is None:
-        raise ValueError(f"No File with FileId {file_id}")
+        raise ValueError(f"No Load with LoadId {file_id}")
     if file.LoadStatusId == LoadStatus.INSERTED_INTO_FIELD_MAP:
         raise AlreadyProcessedError(
-            f"FileId {file_id} is already processed (LoadStatusId={file.LoadStatusId})."
+            f"LoadId {file_id} is already processed (LoadStatusId={file.LoadStatusId})."
         )
 
 
 def _mark_error(file_id: int) -> None:
     session = SessionLocal()
     try:
-        file = FileRepository(session).get(file_id)
+        file = LoadRepository(session).get(file_id)
         if file is not None:
             file.LoadStatusId = LoadStatus.ERROR
             session.commit()

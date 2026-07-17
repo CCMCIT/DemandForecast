@@ -10,7 +10,7 @@ from app.processing.gate_activity.dto import MappedGateActivity
 
 def map_row(detail) -> MappedGateActivity:
     return MappedGateActivity(
-        file_id=detail.FileId,
+        file_id=detail.LoadId,
         date=detail.Date,
         trucker_name=_clean(detail.TruckerName),
         equip_code=_clean(detail.EquipCode),

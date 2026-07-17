@@ -18,11 +18,11 @@ SET IDENTITY_INSERT DemandForecast.FileType_tbl ON;
 MERGE DemandForecast.FileType_tbl AS tgt
 USING (VALUES
     (4, N'Gate Activities')
-) AS src (FileTypeId, Name)
-ON tgt.FileTypeId = src.FileTypeId
+) AS src (LoadTypeId, Name)
+ON tgt.LoadTypeId = src.LoadTypeId
 WHEN NOT MATCHED BY TARGET THEN
-    INSERT (FileTypeId, Name)
-    VALUES (src.FileTypeId, src.Name);
+    INSERT (LoadTypeId, Name)
+    VALUES (src.LoadTypeId, src.Name);
 
 SET IDENTITY_INSERT DemandForecast.FileType_tbl OFF;
 GO
