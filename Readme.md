@@ -16,7 +16,7 @@ files — the shared flow doesn't change.
   company files
        │
        ▼   (1) ingest
-  File_tbl + GpaFileDetail_tbl               — raw rows, per company
+  Load_tbl + GpaFileDetail_tbl               — raw rows, per company
        │
        ▼   (2) process
   Voyage_tbl + VoyageDetails_tbl             — shared voyage model
@@ -26,7 +26,7 @@ files — the shared flow doesn't change.
   demand forecast
 ```
 
-1. **Ingest** — read a company file, write `File_tbl` + that company's raw detail
+1. **Ingest** — read a company file, write `Load_tbl` + that company's raw detail
    table (`GpaFileDetail_tbl`), in one transaction.
 2. **Process** — map the raw rows into the shared `Voyage` / `VoyageDetails` model and
    the field-mapping tables. Runs in resumable phases per file.
@@ -45,7 +45,7 @@ python run.py --help
 Then ingest a file and process what's ready:
 
 ```powershell
-python run.py ingest --path "C:/files/NineDayVessel.csv" --type GPA   # prints a FileId
+python run.py ingest --path "C:/files/NineDayVessel.csv" --type GPA   # prints a LoadId
 python run.py process-pending                                          # process all ready files
 ```
 
