@@ -13,7 +13,7 @@ pytestmark = pytest.mark.unit
 def _detail(**overrides):
     """A minimal stand-in for a CmsGateActivityDetail row."""
     base = dict(
-        FileId=7, Date=date(2026, 1, 14),
+        LoadId=7, Date=date(2026, 1, 14),
         TruckerName="All Points Transport", EquipCode="40STR",
         OceanCarrierName="Maersk A/S", LocationName="GPA - Garden City 3.0",
         EquipLength=40, LengthMatchId=1, GateType="1",

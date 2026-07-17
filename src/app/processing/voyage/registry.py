@@ -1,4 +1,4 @@
-"""FileTypeId -> (detail repository, mapper).
+"""LoadTypeId -> (detail repository, mapper).
 
 To add a company, add ONE entry to REGISTRY (and its mapper module). The Voyage
 writer and the runner never change (Open/Closed). get_processor is the stable core.
@@ -14,7 +14,7 @@ REGISTRY = {
 
 def get_processor(file_type_id: int):
     if file_type_id not in REGISTRY:
-        raise KeyError(f"No processor registered for FileTypeId {file_type_id!r}")
+        raise KeyError(f"No processor registered for LoadTypeId {file_type_id!r}")
     return REGISTRY[file_type_id]
 
 

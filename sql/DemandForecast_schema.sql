@@ -18,9 +18,9 @@ GO
 
 IF OBJECT_ID('DemandForecast.FileType_tbl', 'U') IS NULL
     CREATE TABLE DemandForecast.FileType_tbl (
-        FileTypeId int IDENTITY(1,1) NOT NULL,
+        LoadTypeId int IDENTITY(1,1) NOT NULL,
         Name       nvarchar(100) NULL,
-        CONSTRAINT PK_FileType PRIMARY KEY (FileTypeId)
+        CONSTRAINT PK_FileType PRIMARY KEY (LoadTypeId)
     );
 GO
 
@@ -81,15 +81,15 @@ GO
 
 /* ---------- File + raw detail ---------- */
 
-IF OBJECT_ID('DemandForecast.File_tbl', 'U') IS NULL
-    CREATE TABLE DemandForecast.File_tbl (
-        FileId       int IDENTITY(1,1) NOT NULL,
-        FileName     nvarchar(255) NULL,
+IF OBJECT_ID('DemandForecast.Load_tbl', 'U') IS NULL
+    CREATE TABLE DemandForecast.Load_tbl (
+        LoadId       int IDENTITY(1,1) NOT NULL,
+        SourceName     nvarchar(255) NULL,
         DateLoaded   datetime2(0) NOT NULL CONSTRAINT DF_File_DateLoaded DEFAULT (getdate()),
-        FileTypeId   int NULL,
+        LoadTypeId   int NULL,
         LoadStatusId int NULL,
-        CONSTRAINT PK_File PRIMARY KEY (FileId),
-        CONSTRAINT FK_File_FileType   FOREIGN KEY (FileTypeId)   REFERENCES DemandForecast.FileType_tbl (FileTypeId),
+        CONSTRAINT PK_File PRIMARY KEY (LoadId),
+        CONSTRAINT FK_File_FileType   FOREIGN KEY (LoadTypeId)   REFERENCES DemandForecast.FileType_tbl (LoadTypeId),
         CONSTRAINT FK_File_LoadStatus FOREIGN KEY (LoadStatusId) REFERENCES DemandForecast.LoadStatus_tbl (LoadStatusId)
     );
 GO
@@ -97,7 +97,7 @@ GO
 IF OBJECT_ID('DemandForecast.GpaFileDetail_tbl', 'U') IS NULL
     CREATE TABLE DemandForecast.GpaFileDetail_tbl (
         FileDetailId int IDENTITY(1,1) NOT NULL,
-        FileId       int NOT NULL,
+        LoadId       int NOT NULL,
         TERMINAL     nvarchar(100) NULL,
         WORK_DATE    date NULL,
         VESSEL       nvarchar(100) NULL,
@@ -119,7 +119,7 @@ IF OBJECT_ID('DemandForecast.GpaFileDetail_tbl', 'U') IS NULL
         RAIL_IM40    int NULL,
         REPORTED     nvarchar(50) NULL,
         CONSTRAINT PK_GpaFileDetail PRIMARY KEY (FileDetailId),
-        CONSTRAINT FK_GpaFileDetail_File FOREIGN KEY (FileId) REFERENCES DemandForecast.File_tbl (FileId)
+        CONSTRAINT FK_GpaFileDetail_File FOREIGN KEY (LoadId) REFERENCES DemandForecast.Load_tbl (LoadId)
     );
 GO
 
@@ -144,7 +144,7 @@ GO
 IF OBJECT_ID('DemandForecast.Voyage_tbl', 'U') IS NULL
     CREATE TABLE DemandForecast.Voyage_tbl (
         VoyageId       int IDENTITY(1,1) NOT NULL,
-        FileId         int NOT NULL,
+        LoadId         int NOT NULL,
         Voyage         nvarchar(100) NOT NULL,
         WORK_DATE      date NULL,
         WorkTime       time(0) NULL,
@@ -153,7 +153,7 @@ IF OBJECT_ID('DemandForecast.Voyage_tbl', 'U') IS NULL
         SysEndTime     datetime2(7) GENERATED ALWAYS AS ROW END   HIDDEN NOT NULL,
         CONSTRAINT PK_Voyage PRIMARY KEY (VoyageId),
         CONSTRAINT UQ_Voyage_Voyage UNIQUE (Voyage),
-        CONSTRAINT FK_Voyage_File FOREIGN KEY (FileId) REFERENCES DemandForecast.File_tbl (FileId),
+        CONSTRAINT FK_Voyage_File FOREIGN KEY (LoadId) REFERENCES DemandForecast.Load_tbl (LoadId),
         PERIOD FOR SYSTEM_TIME (SysStartTime, SysEndTime)
     )
     WITH (SYSTEM_VERSIONING = ON (HISTORY_TABLE = DemandForecast.VoyageHistory_tbl));

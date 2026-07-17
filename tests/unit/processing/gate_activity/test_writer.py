@@ -77,7 +77,7 @@ def _write(mapped, existing=None, ids=RESOLVED_IDS):
 def _existing_row(**overrides) -> GateActivityDetail:
     """A target row already in the DB, with the SAME identity as the default _mapped()."""
     base = dict(
-        GateActivityDetailId=555, FileId=1, Date=date(2026, 1, 14),
+        GateActivityDetailId=555, LoadId=1, Date=date(2026, 1, 14),
         FieldTypeValueTruckerId=101, FieldTypeValueEquipTypeId=202,
         FieldTypeValueOceanCarrierId=303, FieldTypeValueLocationId=404,
         EquipLength=40, LengthMatchId=1, GateTypeId=1,
@@ -102,7 +102,7 @@ def test_new_identity_is_inserted():
 
 def test_inserted_row_copies_all_columns():
     row = _write([_mapped()]).added[0]
-    assert (row.FileId, row.Date) == (7, date(2026, 1, 14))
+    assert (row.LoadId, row.Date) == (7, date(2026, 1, 14))
     assert (row.EquipLength, row.LengthMatchId, row.GateTypeId) == (40, 1, 1)
     assert (row.BareChassisFlag, row.ContainerLoadedFlag) == (False, True)
     assert (row.Units, row.Transactions) == (3, 2)
@@ -123,7 +123,7 @@ def test_existing_identity_updates_in_place_not_inserted():
     repo = _write([_mapped(file_id=7, units=3, transactions=2)], existing=[existing])
     assert repo.added == []                 # nothing inserted
     assert existing.GateActivityDetailId == 555  # same row, id untouched
-    assert existing.FileId == 7             # payload updated
+    assert existing.LoadId == 7             # payload updated
     assert existing.Units == 3
     assert existing.Transactions == 2
 
@@ -141,7 +141,7 @@ def test_row_differing_only_by_date_is_a_new_row():
     existing = _existing_row()  # Date 2026-01-14
     repo = _write([_mapped(date=date(2026, 1, 15))], existing=[existing])
     assert len(repo.added) == 1             # different movement date -> insert
-    assert existing.FileId == 1             # the Jan-14 row untouched
+    assert existing.LoadId == 1             # the Jan-14 row untouched
 
 
 # --- within-batch duplicates ---
