@@ -26,8 +26,8 @@ GO
 
 /* ---------- GateType (lookup) ---------- */
 
-IF OBJECT_ID('DemandForecast.GateType', 'U') IS NULL
-    CREATE TABLE DemandForecast.GateType (
+IF OBJECT_ID('DemandForecast.GateType_tbl', 'U') IS NULL
+    CREATE TABLE DemandForecast.GateType_tbl (
         GateTypeId int IDENTITY(1,1) NOT NULL,
         Name       nvarchar(50) NOT NULL,
         CONSTRAINT PK_GateType PRIMARY KEY (GateTypeId)
