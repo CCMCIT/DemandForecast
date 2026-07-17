@@ -55,18 +55,27 @@ project/
 │   │   │   ├── base.py              # declarative base
 │   │   │   ├── file.py
 │   │   │   ├── gpa_file_detail.py
+│   │   │   ├── cms_gate_activity_detail.py
 │   │   │   ├── voyage.py
 │   │   │   ├── voyage_details.py
+│   │   │   ├── gate_activity_detail.py
 │   │   │   ├── mode.py
 │   │   │   ├── direction.py
+│   │   │   ├── gate_type.py
+│   │   │   ├── field_value.py
+│   │   │   ├── field_type_value.py
 │   │   │   └── process_log_error.py
 │   │   └── repositories/            # ALL DB access — one per table
 │   │       ├── file_repository.py
 │   │       ├── gpa_file_detail_repository.py
+│   │       ├── cms_gate_activity_detail_repository.py
 │   │       ├── voyage_repository.py
 │   │       ├── voyage_details_repository.py
+│   │       ├── gate_activity_detail_repository.py
 │   │       ├── mode_repository.py
 │   │       ├── direction_repository.py
+│   │       ├── gate_type_repository.py
+│   │       ├── field_type_value_repository.py
 │   │       └── process_log_error_repository.py
 │   │
 │   ├── ingestion/                   # file -> File_tbl + <X>FileDetail_tbl
@@ -78,15 +87,20 @@ project/
 │   │       └── loader.py            # rows -> File_tbl + GpaFileDetail_tbl
 │   │
 │   ├── processing/                  # one folder per domain (voyage, gate_activity, ...)
-│   │   └── voyage/                  # detail rows -> Voyage + VoyageDetails + field maps
-│   │       ├── registry.py          # FileTypeId -> (detail repository, mapper)  (explicit dict)
-│   │       ├── dto.py               # MappedVoyage / MappedDetail / MappedField (source-agnostic)
-│   │       ├── field_mapping.py     # build_fields(row, spec) -> MappedField[]  (shared helper)
-│   │       ├── writer.py            # MappedVoyage -> DB  (source-agnostic across GPA/FPA/...)
-│   │       ├── runner.py            # two-phase orchestration: voyages, then details + fields
-│   │       ├── status.py            # fallen-off classification (Called / Cancelled)
-│   │       └── gpa/
-│   │           └── mapper.py        # GpaFileDetail row -> MappedVoyage  (the ONLY GPA-aware piece)
+│   │   ├── voyage/                  # detail rows -> Voyage + VoyageDetails + field maps
+│   │   │   ├── registry.py          # FileTypeId -> (detail repository, mapper)  (explicit dict)
+│   │   │   ├── dto.py               # MappedVoyage / MappedDetail / MappedField (source-agnostic)
+│   │   │   ├── field_mapping.py     # build_fields(row, spec) -> MappedField[]  (shared helper)
+│   │   │   ├── writer.py            # MappedVoyage -> DB  (source-agnostic across GPA/FPA/...)
+│   │   │   ├── runner.py            # two-phase orchestration: voyages, then details + fields
+│   │   │   ├── status.py            # fallen-off classification (Called / Cancelled)
+│   │   │   └── gpa/
+│   │   │       └── mapper.py        # GpaFileDetail row -> MappedVoyage  (the ONLY GPA-aware piece)
+│   │   └── gate_activity/           # CMS gate rows -> GateActivityDetail  (1:1, no unpivot)
+│   │       ├── dto.py               # MappedGateActivity (source-agnostic)
+│   │       ├── mapper.py            # CmsGateActivityDetail row -> MappedGateActivity  (the ONLY CMS-aware piece)
+│   │       ├── writer.py            # MappedGateActivity -> DB  (resolves names to FieldTypeValue ids)
+│   │       └── runner.py            # orchestration: pending CMS files -> GateActivityDetail
 │   │
 │   ├── forecast/                    # future forecasting; reads via repositories only
 │   │
@@ -97,7 +111,8 @@ project/
     ├── integration/                 # hit the live DB (marker: integration)
     └── unit/                        # offline tests (marker: unit); mirrors src/app/
         └── processing/
-            └── voyage/              # voyage mapper / validation tests
+            ├── voyage/              # voyage mapper / field-mapping / validation tests
+            └── gate_activity/       # CMS mapper / writer tests
 ```
 
 Top level of `tests/` is the KIND of test (unit / integration). Below it, mirror the
@@ -166,14 +181,6 @@ three), not pre-emptively.
 - **ExternalId resolution**: `FieldTypeValue.ExternalId` / `ExternalNotifFlag` — resolving a value to
   an id in an external master table via `FieldType.ExternalWhereClause` (types 3 & 5 only) — is not
   built. Left NULL for now. Design separately before implementing.
-
-## Build order (as built)
-1. `db/models/base.py`, `db/session.py`
-2. `db/models` (reflect from live DB, then clean up)
-3. `db/repositories`
-4. `ingestion` (`base`, `gpa/reader`, `gpa/loader`, `registry`) + `ingestion/runner`
-5. `processing/voyage` (`dto`, `field_mapping`, `gpa/mapper`, `writer`, `status`, `registry`) + `processing/voyage/runner`
-6. `entrypoints/cli.py` (+ `run.py`)
 
 ## Working agreement
 - Build only what is asked. Nothing extra.

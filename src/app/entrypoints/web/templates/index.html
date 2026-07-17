@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DemandForecast — Tester UI</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    :root { --brand: #c0392b; --brand-dark: #96281b; }
+    body { background: #f6f8fa; }
+    .app-wrap { max-width: 1080px; }
+    .legend dt { font-weight: 600; color: var(--brand-dark); margin-top: .6rem; }
+    .legend dd { margin-bottom: 0; }
+    @media (min-width: 992px) { .legend-card { position: sticky; top: 1rem; } }
+    .marquee { width: 100%; margin-top: 1.5rem; text-align: center; }
+    .marquee-text {
+      color: var(--brand); font-weight: 600; letter-spacing: .12em; text-transform: uppercase;
+    }
+    .cmd-card .form-label { font-weight: 600; }
+    #output {
+      min-height: 4rem; max-height: 340px; overflow-y: auto;
+      white-space: pre-wrap; word-break: break-word;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .85rem;
+    }
+    .check-ok  { color: #198754; }
+    .check-bad { color: var(--brand); }
+    .navbar-brand small { opacity: .75; font-weight: 400; }
+    .navbar-brand-bar { background: var(--brand); }
+    .card-title { color: var(--brand-dark); }
+    /* Red accent for the primary/outline buttons */
+    .btn-brand { background: var(--brand); border-color: var(--brand); color: #fff; }
+    .btn-brand:hover, .btn-brand:focus { background: var(--brand-dark); border-color: var(--brand-dark); color: #fff; }
+    .btn-outline-brand { color: var(--brand); border-color: var(--brand); }
+    .btn-outline-brand:hover, .btn-outline-brand:focus { background: var(--brand); color: #fff; }
+    .poc-banner { border-left: 4px solid var(--brand); }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-brand-bar" data-bs-theme="dark">
+    <div class="container app-wrap">
+      <span class="navbar-brand mb-0 h1">📦 DemandForecast <small>· Tester UI</small></span>
+      <div class="d-flex align-items-center gap-2">
+        <label for="env" class="text-light small mb-0">Environment</label>
+        <select id="env" class="form-select form-select-sm" style="width:auto">
+          {% for e in envs %}
+          <option value="{{ e }}" {% if e == default_env %}selected{% endif %}>{{ e }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container app-wrap py-4">
+
+    <!-- Proof-of-concept notice -->
+    <div class="alert alert-light poc-banner shadow-sm d-flex align-items-start gap-2 mb-4" role="alert">
+      <span class="fs-5">⚠️</span>
+      <div class="small">
+        <strong>Proof of concept — for testers only.</strong>
+        A convenience UI for manually running the pipeline commands. It is
+        <strong>independent of the DemandForecast forecasting logic</strong> and is not part of the product.
+      </div>
+    </div>
+
+    <div class="row g-4">
+
+      <!-- Working area -->
+      <div class="col-lg-8">
+
+        <!-- Setup / Health -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <h5 class="card-title mb-0">Setup check</h5>
+              <button class="btn btn-outline-brand" data-run="/api/health">Check setup</button>
+            </div>
+            <p class="text-secondary small mt-2 mb-2">
+              Verifies the selected environment: <code>.env</code>, database connection, and watch folder.
+            </p>
+            <ul id="health-list" class="list-unstyled mb-0 small"></ul>
+          </div>
+        </div>
+
+        <!-- Commands -->
+        <div class="card shadow-sm mb-4 cmd-card">
+          <div class="card-body">
+            <h5 class="card-title">Commands</h5>
+
+            <!-- Ingest file -->
+            <div class="row g-2 align-items-end py-3 border-top">
+              <div class="col-12 col-md-4">
+                <label class="form-label">Ingest a file</label>
+                <input type="file" id="ingest-file" class="form-control" accept=".csv">
+              </div>
+              <div class="col-7 col-md-4">
+                <label class="form-label">File type</label>
+                <select id="ingest-type" class="form-select">
+                  {% for t in file_types %}<option value="{{ t }}">{{ t }}</option>{% endfor %}
+                </select>
+              </div>
+              <div class="col-5 col-md-4 d-grid">
+                <button class="btn btn-brand" data-stream="ingest" data-form="ingest">Run</button>
+              </div>
+            </div>
+
+            <!-- Ingest folder -->
+            <div class="row g-2 align-items-end py-3 border-top">
+              <div class="col-12 col-md-4">
+                <label class="form-label">Ingest a folder</label>
+                <input type="text" id="folder" class="form-control" placeholder="{{ watch_folder }}">
+              </div>
+              <div class="col-7 col-md-4">
+                <label class="form-label">File type</label>
+                <select id="folder-type" class="form-select">
+                  {% for t in file_types %}<option value="{{ t }}">{{ t }}</option>{% endfor %}
+                </select>
+              </div>
+              <div class="col-5 col-md-4 d-grid">
+                <button class="btn btn-brand" data-stream="ingest-folder" data-form="folder">Run</button>
+              </div>
+            </div>
+
+            <!-- Process next N -->
+            <div class="row g-2 align-items-end py-3 border-top">
+              <div class="col-7 col-md-8">
+                <label class="form-label">Process next N files</label>
+                <input type="number" id="next-count" class="form-control" min="1" value="5">
+              </div>
+              <div class="col-5 col-md-4 d-grid">
+                <button class="btn btn-brand" data-stream="process-next" data-form="next">Run</button>
+              </div>
+            </div>
+
+            <!-- Process / status buttons -->
+            <div class="row g-2 py-3 border-top">
+              <div class="col-12 col-md-4 d-grid">
+                <button class="btn btn-outline-brand" data-stream="process-pending">Process pending</button>
+              </div>
+              <div class="col-12 col-md-4 d-grid">
+                <button class="btn btn-outline-brand" data-stream="process-gate-activity-pending">Gate-activity pending</button>
+              </div>
+              <div class="col-12 col-md-4 d-grid">
+                <button class="btn btn-outline-brand" data-run="/api/import-status">Import status</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Output -->
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h6 class="card-subtitle text-secondary mb-0">Output</h6>
+              <button id="stop-btn" class="btn btn-sm btn-danger d-none">■ Stop</button>
+            </div>
+            <div id="output" class="text-secondary">Ready.</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Legend -->
+      <div class="col-lg-4">
+        <div class="card shadow-sm legend-card">
+          <div class="card-body">
+            <h6 class="card-title">What each command does</h6>
+            <dl class="legend small mb-0">
+              <dt>Check setup</dt>
+              <dd class="text-secondary">Checks the database connection, <code>.env</code>, and watch folder. Read-only.</dd>
+
+              <dt>Ingest a file</dt>
+              <dd class="text-secondary">Loads one CSV file into the database staging tables.</dd>
+
+              <dt>Ingest a folder</dt>
+              <dd class="text-secondary">Loads every CSV in a folder. Files already loaded are skipped.</dd>
+
+              <dt>Process next N files</dt>
+              <dd class="text-secondary">Turns the next N ingested files into voyages (oldest first).</dd>
+
+              <dt>Process pending</dt>
+              <dd class="text-secondary">Turns <em>all</em> ingested files into voyages. Files whose type has no processor are skipped.</dd>
+
+              <dt>Gate-activity pending</dt>
+              <dd class="text-secondary">Turns all ingested gate-activity files into gate-activity records.</dd>
+
+              <dt>Import status</dt>
+              <dd class="text-secondary">Shows how many files loaded successfully vs failed. Read-only.</dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="marquee small">
+      <span class="marquee-text">Test Only · Proof Of Concept Only</span>
+    </div>
+
+  </main>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

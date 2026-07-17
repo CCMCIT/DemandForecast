@@ -12,14 +12,6 @@ class VoyageRepository:
         self.session.flush()  # assign the identity VoyageId
         return voyage
 
-    def get_by_voyage(self, voyage: str) -> Voyage | None:
-        """The existing row with this Voyage number, or None. Voyage is unique."""
-        return (
-            self.session.query(Voyage)
-            .filter(Voyage.Voyage == voyage)
-            .one_or_none()
-        )
-
     def get_by_voyage_numbers(self, voyage_numbers) -> dict[str, Voyage]:
         """The existing Voyage rows for these numbers, keyed by number. Used on
         resume to fetch the already-saved voyages in one query (Voyage is unique)."""
