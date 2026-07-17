@@ -2,6 +2,7 @@
    One-off migration: rename File_tbl -> Load_tbl and its columns.
 
    Applies to the DemandForecast schema:
+     GateType                -> GateType_tbl      (guarded; skipped if already done)
      File_tbl                -> Load_tbl
      File_tbl.FileId         -> LoadId          (+ every FileId FK column below)
      File_tbl.FileName       -> SourceName
@@ -44,6 +45,11 @@ GO
 /* ---------- STEP 1: the rename (one transaction) ---------- */
 SET XACT_ABORT ON;   -- any error rolls the whole batch back
 BEGIN TRAN;
+
+-- GateType -> GateType_tbl (earlier rename; guarded so it is safe to run on an
+-- environment where it was already applied).
+IF OBJECT_ID('DemandForecast.GateType', 'U') IS NOT NULL
+    EXEC sp_rename 'DemandForecast.GateType', 'GateType_tbl';
 
 -- FileType_tbl lookup: rename only its PK column (table name stays FileType_tbl).
 EXEC sp_rename 'DemandForecast.FileType_tbl.FileTypeId', 'LoadTypeId', 'COLUMN';
