@@ -29,9 +29,9 @@ GO
 
 /* ---------- GateType ---------- */
 
-SET IDENTITY_INSERT DemandForecast.GateType ON;
+SET IDENTITY_INSERT DemandForecast.GateType_tbl ON;
 
-MERGE DemandForecast.GateType AS tgt
+MERGE DemandForecast.GateType_tbl AS tgt
 USING (VALUES
     (1, N'In Gate'),
     (2, N'Out Gate')
@@ -41,7 +41,7 @@ WHEN NOT MATCHED BY TARGET THEN
     INSERT (GateTypeId, Name)
     VALUES (src.GateTypeId, src.Name);
 
-SET IDENTITY_INSERT DemandForecast.GateType OFF;
+SET IDENTITY_INSERT DemandForecast.GateType_tbl OFF;
 GO
 
 /* ---------- LengthMatch_tbl ----------
