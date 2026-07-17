@@ -81,7 +81,7 @@ def process_file(file_id: int, progress=None) -> int:
             voyages = writer.load_voyages(mapped)
             _report(progress, "phase", number=1, name="voyages", state="skipped")
         else:
-            voyages = [writer.write_voyage(m) for m in mapped]
+            voyages = writer.write_voyages(mapped)
             file.LoadStatusId = LoadStatus.INSERTED_INTO_VOYAGE
             session.commit()
             _report(progress, "phase", number=1, name="voyages", state="completed")
@@ -98,8 +98,7 @@ def process_file(file_id: int, progress=None) -> int:
 
         # Phase 3: field maps via the proc. Always runs here -- the only "phase 3
         # done" state (5) is rejected up front by _reject_if_already_processed.
-        for m, voyage in zip(mapped, voyages):
-            writer.write_fields(m, voyage)
+        writer.write_fields(list(zip(mapped, voyages)))
         file.LoadStatusId = LoadStatus.INSERTED_INTO_FIELD_MAP
         session.commit()
         _report(progress, "phase", number=3, name="field maps", state="completed")

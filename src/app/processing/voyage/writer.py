@@ -34,14 +34,15 @@ class VoyageWriter:
         self.direction_ids = direction_ids
         self.equipment_ids = equipment_ids
 
-    def write_voyage(self, mapped: MappedVoyage) -> Voyage:
-        """Phase 1: insert or replace the voyage only, no details.
+    def write_voyages(self, mapped: list[MappedVoyage]) -> list[Voyage]:
+        """Phase 1: insert or replace every voyage in the file, in input order.
 
-        Kept separate from write_details so the runner can commit all voyages
-        first (LoadStatus 3) before any detail is written. Returns the persisted
-        Voyage so the runner can pair it with its details in phase 2.
+        The file's existing voyages are fetched in ONE query and matched in
+        memory, so a lookup costs no per-voyage DB round-trip. Returns the
+        persisted Voyages so the runner can pair each with its details/fields.
         """
-        return self._replace_or_add_voyage(mapped)
+        existing = self.voyages.get_by_voyage_numbers([m.voyage for m in mapped])
+        return [self._replace_or_add_voyage(m, existing.get(m.voyage)) for m in mapped]
 
     def load_voyages(self, mapped: list[MappedVoyage]) -> list[Voyage]:
         """Resume helper: return the already-saved Voyage for each mapped voyage,
@@ -74,30 +75,43 @@ class VoyageWriter:
             return None  # the empties (MT) carry no equipment type
         return self.equipment_ids[name]
 
-    def write_fields(self, mapped: MappedVoyage, voyage: Voyage) -> None:
-        """Phase 2: write the voyage's descriptive fields via the DB proc.
+    def write_fields(self, voyage_pairs: list[tuple[MappedVoyage, Voyage]]) -> None:
+        """Phase 3: upsert every voyage's descriptive fields via the DB proc, in
+        one batched call for the whole file.
 
-        DemandForecast.VoyageFieldMap_upsert owns the whole per-attribute unit:
+        DemandForecast.VoyageFieldMap_upsert handles one field at a time:
         find-or-create FieldValue, find-or-create FieldTypeValue (inheriting the
         type's ExternalNotifFlag, ExternalId left NULL), then upsert the single
-        map row for (voyage, field type). Called once per field on the runner's
-        session, so it rides the same phase-2 transaction.
-        """
-        for f in mapped.fields:
-            self.session.execute(
-                text(
-                    "EXEC DemandForecast.VoyageFieldMap_upsert "
-                    ":voyage_id, :field_type_id, :field_value"
-                ),
-                {
-                    "voyage_id": voyage.VoyageId,
-                    "field_type_id": f.field_type_id,
-                    "field_value": f.value,
-                },
-            )
+        map row for (voyage, field type).
 
-    def _replace_or_add_voyage(self, mapped: MappedVoyage) -> Voyage:
-        """Insert the voyage, or replace it if it already exists.
+        We gather every field across all voyages into one list and hand it to a
+        single executemany. The engine's fast_executemany (see db/session.py) is
+        what sends that list as one batched call instead of one round-trip per
+        field -- turning hundreds of trips per file into one. Runs on the runner's
+        session, so it rides the same phase-3 transaction.
+        """
+        field_rows = [
+            {
+                "voyage_id": voyage.VoyageId,
+                "field_type_id": field.field_type_id,
+                "field_value": field.value,
+            }
+            for mapped, voyage in voyage_pairs
+            for field in mapped.fields
+        ]
+        if not field_rows:
+            return
+        self.session.execute(
+            text(
+                "EXEC DemandForecast.VoyageFieldMap_upsert "
+                ":voyage_id, :field_type_id, :field_value"
+            ),
+            field_rows,
+        )
+
+    def _replace_or_add_voyage(self, mapped: MappedVoyage, existing: Voyage | None) -> Voyage:
+        """Insert the voyage, or replace it if it already exists (`existing` is the
+        already-loaded row for this voyage number, or None).
 
         On replace, the UPDATE archives the previous voyage version to
         VoyageHistory_tbl and deleting its details archives them to
@@ -105,7 +119,6 @@ class VoyageWriter:
         are re-inserted by write(). This is what makes reprocessing a file
         overwrite-with-history instead of failing on the unique Voyage key.
         """
-        existing = self.voyages.get_by_voyage(mapped.voyage)
         if existing is None:
             return self.voyages.add(
                 Voyage(
