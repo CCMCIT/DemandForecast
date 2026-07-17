@@ -167,14 +167,6 @@ three), not pre-emptively.
   an id in an external master table via `FieldType.ExternalWhereClause` (types 3 & 5 only) — is not
   built. Left NULL for now. Design separately before implementing.
 
-## Build order (as built)
-1. `db/models/base.py`, `db/session.py`
-2. `db/models` (reflect from live DB, then clean up)
-3. `db/repositories`
-4. `ingestion` (`base`, `gpa/reader`, `gpa/loader`, `registry`) + `ingestion/runner`
-5. `processing/voyage` (`dto`, `field_mapping`, `gpa/mapper`, `writer`, `status`, `registry`) + `processing/voyage/runner`
-6. `entrypoints/cli.py` (+ `run.py`)
-
 ## Working agreement
 - Build only what is asked. Nothing extra.
 - If requirements are unclear, ask before coding.
