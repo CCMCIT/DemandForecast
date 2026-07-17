@@ -4,7 +4,7 @@
 Ingest daily files into staging tables, then process them into voyage tables.
 Future: forecasting on this data.
 
-- Phase 1a — Ingestion: read a file, write `File_tbl` + `GpaFileDetail_tbl`.
+- Phase 1a — Ingestion: read a file, write `Load_tbl` + `GpaFileDetail_tbl`.
 - Phase 1b — Processing: read `GpaFileDetail_tbl`, write `Voyage_tbl` + `VoyageDetails_tbl`.
   The voyage's descriptive fields (Vessel / Ocean Carrier / Service / Location / Origin /
   Destination) are written by the DB proc `DemandForecast.VoyageFieldMap_upsert`, called
@@ -53,7 +53,7 @@ project/
 │   │   ├── session.py               # engine + session factory; configure(env) binds dev/uat/prod
 │   │   ├── models/                  # DB-first ORM models (reflect existing tables only)
 │   │   │   ├── base.py              # declarative base
-│   │   │   ├── file.py
+│   │   │   ├── load.py
 │   │   │   ├── gpa_file_detail.py
 │   │   │   ├── cms_gate_activity_detail.py
 │   │   │   ├── voyage.py
@@ -66,7 +66,7 @@ project/
 │   │   │   ├── field_type_value.py
 │   │   │   └── process_log_error.py
 │   │   └── repositories/            # ALL DB access — one per table
-│   │       ├── file_repository.py
+│   │       ├── load_repository.py
 │   │       ├── gpa_file_detail_repository.py
 │   │       ├── cms_gate_activity_detail_repository.py
 │   │       ├── voyage_repository.py
@@ -78,17 +78,17 @@ project/
 │   │       ├── field_type_value_repository.py
 │   │       └── process_log_error_repository.py
 │   │
-│   ├── ingestion/                   # file -> File_tbl + <X>FileDetail_tbl
+│   ├── ingestion/                   # file -> Load_tbl + <X>FileDetail_tbl
 │   │   ├── base.py                  # shared reader/loader contract
-│   │   ├── registry.py              # FileTypeId -> (reader, loader)  (explicit dict)
+│   │   ├── registry.py              # LoadTypeId -> (reader, loader)  (explicit dict)
 │   │   ├── runner.py                # orchestration: single file + folder
 │   │   └── gpa/
 │   │       ├── reader.py            # file -> rows (CSV/Excel)
-│   │       └── loader.py            # rows -> File_tbl + GpaFileDetail_tbl
+│   │       └── loader.py            # rows -> Load_tbl + GpaFileDetail_tbl
 │   │
 │   ├── processing/                  # one folder per domain (voyage, gate_activity, ...)
 │   │   ├── voyage/                  # detail rows -> Voyage + VoyageDetails + field maps
-│   │   │   ├── registry.py          # FileTypeId -> (detail repository, mapper)  (explicit dict)
+│   │   │   ├── registry.py          # LoadTypeId -> (detail repository, mapper)  (explicit dict)
 │   │   │   ├── dto.py               # MappedVoyage / MappedDetail / MappedField (source-agnostic)
 │   │   │   ├── field_mapping.py     # build_fields(row, spec) -> MappedField[]  (shared helper)
 │   │   │   ├── writer.py            # MappedVoyage -> DB  (source-agnostic across GPA/FPA/...)
@@ -127,7 +127,7 @@ Every command takes `--env dev|uat|prod` (default `dev`).
 - **models**: DB-first ORM definitions. Reflect existing tables; no logic.
 - **repositories**: all DB access. The only place that reads/writes tables.
 - **ingestion/<x>/reader**: parse a file into rows. No DB.
-- **ingestion/<x>/loader**: write rows to `File_tbl` + the detail table.
+- **ingestion/<x>/loader**: write rows to `Load_tbl` + the detail table.
 - **ingestion/runner** (+ `registry`): orchestrate ingestion; registry maps FileType -> reader + loader.
 - **processing/<domain>/**: one folder per domain (`voyage`, `gate_activity`, ...). Each owns its
   own mapper/writer/runner; domains do not share a runner (see "Extending later").
