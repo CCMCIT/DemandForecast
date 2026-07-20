@@ -16,8 +16,11 @@ GO
 
 /* ---------- Lookups (no FKs) ---------- */
 
-IF OBJECT_ID('DemandForecast.FileType_tbl', 'U') IS NULL
-    CREATE TABLE DemandForecast.FileType_tbl (
+-- Load-type lookup. Table is LoadType_tbl; the PK constraint keeps its original
+-- name (PK_FileType) so a fresh build matches a legacy DB migrated by
+-- rename_File_to_Load.sql (sp_rename never renames constraints).
+IF OBJECT_ID('DemandForecast.LoadType_tbl', 'U') IS NULL
+    CREATE TABLE DemandForecast.LoadType_tbl (
         LoadTypeId int IDENTITY(1,1) NOT NULL,
         Name       nvarchar(100) NULL,
         CONSTRAINT PK_FileType PRIMARY KEY (LoadTypeId)
@@ -89,7 +92,7 @@ IF OBJECT_ID('DemandForecast.Load_tbl', 'U') IS NULL
         LoadTypeId   int NULL,
         LoadStatusId int NULL,
         CONSTRAINT PK_File PRIMARY KEY (LoadId),
-        CONSTRAINT FK_File_FileType   FOREIGN KEY (LoadTypeId)   REFERENCES DemandForecast.FileType_tbl (LoadTypeId),
+        CONSTRAINT FK_File_FileType   FOREIGN KEY (LoadTypeId)   REFERENCES DemandForecast.LoadType_tbl (LoadTypeId),
         CONSTRAINT FK_File_LoadStatus FOREIGN KEY (LoadStatusId) REFERENCES DemandForecast.LoadStatus_tbl (LoadStatusId)
     );
 GO

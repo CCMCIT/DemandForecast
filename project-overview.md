@@ -49,7 +49,7 @@ Each file is processed in three committed steps. If a run is interrupted, the ne
 
 | Status | Meaning | Set by |
 |:---:|---|---|
-| **2** | Inserted into FileDetail — ready to process | ingest |
+| **2** | Inserted into LoadDetail — ready to process | ingest |
 | **3** | Voyages written | process — phase 1 |
 | **4** | Details written | process — phase 2 |
 | **5** | Field maps written — **fully processed** | process — phase 3 |
