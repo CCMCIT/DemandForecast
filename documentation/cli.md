@@ -99,10 +99,10 @@ python run.py import-status
 
 | Id | Meaning | Set by |
 |----|---------|--------|
-| 1 | Inserted into File | (intermediate) |
-| 2 | Inserted into FileDetail | `ingest` success → ready to process |
-| 3 | Inserted into Voyage | processing phase 1 |
-| 4 | Inserted into VoyageDetail | processing phase 2 |
+| 1 | Inserted into Load | (intermediate) |
+| 2 | Inserted into LoadDetail | `ingest` success → ready to process |
+| 3 | Inserted into Header | processing phase 1 |
+| 4 | Inserted into Detail | processing phase 2 |
 | 5 | Inserted into FieldMap | processing phase 3 → **fully processed** |
 | 99 | Error | any failure |
 
