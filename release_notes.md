@@ -18,3 +18,9 @@ disk into the voyage tables, ready for forecasting later.
   file on a remote database.
 - **Web UI (demo)** — a simple Flask web page to run ingestion and processing
   from the browser instead of the command line.
+- **Table rename** — `File_tbl` is now `Load_tbl`, and its columns `FileId`,
+  `FileName`, and `FileTypeId` are now `LoadId`, `SourceName`, and `LoadTypeId`
+  (the `FileId` foreign keys on the detail and voyage tables were renamed to
+  match). Behaviour is unchanged. This is a breaking database change: run
+  `sql/rename_File_to_Load.sql` against each environment before deploying, or
+  the app will not find the old columns.

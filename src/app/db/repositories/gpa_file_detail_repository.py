@@ -25,7 +25,7 @@ class GpaFileDetailRepository:
     def get_by_file_id(self, file_id: int) -> list[GpaFileDetail]:
         return (
             self.session.query(GpaFileDetail)
-            .filter(GpaFileDetail.FileId == file_id)
+            .filter(GpaFileDetail.LoadId == file_id)
             .all()
         )
 
@@ -33,7 +33,7 @@ class GpaFileDetailRepository:
         """The parsed REPORTED date for a voyage's row in a given file, or None."""
         row = (
             self.session.query(GpaFileDetail.REPORTED)
-            .filter(GpaFileDetail.FileId == file_id, GpaFileDetail.VOYAGE == voyage)
+            .filter(GpaFileDetail.LoadId == file_id, GpaFileDetail.VOYAGE == voyage)
             .first()
         )
         return _parse_reported(row.REPORTED) if row is not None else None
@@ -41,8 +41,8 @@ class GpaFileDetailRepository:
     def get_reported_dates(
         self, file_voyage_pairs: list[tuple[int, str]]
     ) -> dict[tuple[int, str], date]:
-        """Batch form of get_reported_date: {(FileId, Voyage): date} for the given
-        (FileId, Voyage) pairs, fetched in ONE query instead of one per pair.
+        """Batch form of get_reported_date: {(LoadId, Voyage): date} for the given
+        (LoadId, Voyage) pairs, fetched in ONE query instead of one per pair.
 
         A pair whose REPORTED is absent/blank/unparseable is simply omitted, so the
         caller treats a missing key exactly like get_reported_date returning None.
@@ -53,13 +53,13 @@ class GpaFileDetailRepository:
         file_ids = {file_id for file_id, _ in file_voyage_pairs}
         voyage_nums = {voyage for _, voyage in file_voyage_pairs}
         # Filter by the two column sets, then keep only the exact pairs asked for
-        # (a FileId/Voyage cross-combination that isn't a wanted pair is discarded).
+        # (a LoadId/Voyage cross-combination that isn't a wanted pair is discarded).
         rows = (
             self.session.query(
-                GpaFileDetail.FileId, GpaFileDetail.VOYAGE, GpaFileDetail.REPORTED
+                GpaFileDetail.LoadId, GpaFileDetail.VOYAGE, GpaFileDetail.REPORTED
             )
             .filter(
-                GpaFileDetail.FileId.in_(file_ids),
+                GpaFileDetail.LoadId.in_(file_ids),
                 GpaFileDetail.VOYAGE.in_(voyage_nums),
             )
             .all()

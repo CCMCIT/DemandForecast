@@ -10,15 +10,15 @@ python run.py --help
 
 ## Commands
 
-### `ingest` — a file → `File_tbl` + the company detail table
+### `ingest` — a file → `Load_tbl` + the company detail table
 
 ```powershell
 python run.py ingest --path "C:/path/NineDayVessel_091720251700.csv" --type GPA
 ```
 
 - `--type` is the **FileType** name (no detection): `GPA`, `NCSPA_IMPORTS`, `NCSPA_EXPORTS`.
-- Inserts one `File_tbl` row and all detail rows in **one transaction**.
-- On success prints the new `FileId` and sets `LoadStatusId = 2` (*Inserted into
+- Inserts one `Load_tbl` row and all detail rows in **one transaction**.
+- On success prints the new `LoadId` and sets `LoadStatusId = 2` (*Inserted into
   FileDetail*). On failure it rolls back and records the `File` row as `LoadStatusId = 99`
   (*Error*).
 
@@ -69,13 +69,13 @@ python run.py process-pending
 python run.py process-gate-activity --file-id 123
 ```
 
-- For a gate-activity file (`FileTypeId = 4`). Reads its `CmsGateActivityDetail` staging
+- For a gate-activity file (`LoadTypeId = 4`). Reads its `CmsGateActivityDetail` staging
   rows and **upserts** each by its identity (`Date` + the nine dimension columns): an
   existing row is updated in place (same id, prior version archived by temporal), a new
   identity is inserted. No phases.
 - Sets `LoadStatusId = 4` on success (shared "detail written" status). On failure: rolls
   back, sets `LoadStatusId = 99`, logs.
-- Rejects the file if it isn't `FileTypeId = 4`.
+- Rejects the file if it isn't `LoadTypeId = 4`.
 
 ### `process-gate-activity-pending` — every pending gate-activity file
 
@@ -83,7 +83,7 @@ python run.py process-gate-activity --file-id 123
 python run.py process-gate-activity-pending
 ```
 
-- Processes **every** gate-activity file (`FileTypeId = 4`) at status **2**, each
+- Processes **every** gate-activity file (`LoadTypeId = 4`) at status **2**, each
   independently — one file's failure doesn't stop the rest.
 - Prints a summary (`processed / failed`).
 
@@ -109,7 +109,7 @@ python run.py import-status
 A file at **5** is refused by `process` (already done). A file left at **3 or 4**
 (interrupted) is resumed. A file at **99** is reprocessed from phase 1.
 
-Gate-activity files (`FileTypeId = 4`) go straight from **2 → 4** — no phase 3 (no field
+Gate-activity files (`LoadTypeId = 4`) go straight from **2 → 4** — no phase 3 (no field
 maps). Status **4** is shared as the generic "detail written" marker and will be renamed
 neutrally (e.g. *Inserted into Detail*) once both sources use it.
 
@@ -118,7 +118,7 @@ neutrally (e.g. *Inserted into Detail*) once both sources use it.
 ```powershell
 .\.venv\Scripts\Activate.ps1
 
-# ingest (prints FileId, sets LoadStatusId = 2)
+# ingest (prints LoadId, sets LoadStatusId = 2)
 python run.py ingest --path "C:/files/NineDayVessel_091720251700.csv" --type GPA
 
 # process that one file...

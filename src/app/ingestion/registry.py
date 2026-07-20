@@ -1,4 +1,4 @@
-"""FileTypeId -> (reader, loader).
+"""LoadTypeId -> (reader, loader).
 
 To add a company, add ONE entry to REGISTRY (and its reader/loader module).
 The core (get_handlers) does not change.
@@ -15,5 +15,5 @@ REGISTRY: dict[int, tuple[type[BaseReader], type[BaseLoader]]] = {
 
 def get_handlers(file_type_id: int) -> tuple[type[BaseReader], type[BaseLoader]]:
     if file_type_id not in REGISTRY:
-        raise KeyError(f"No handlers registered for FileTypeId {file_type_id!r}")
+        raise KeyError(f"No handlers registered for LoadTypeId {file_type_id!r}")
     return REGISTRY[file_type_id]

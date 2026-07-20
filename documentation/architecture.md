@@ -3,7 +3,7 @@
 Three separate jobs, never merged. Shared targets are agnostic to the source, so
 adding a company touches only that company's files.
 
-- **Job 1 — Ingestion:** a file on disk → `File_tbl` + a company detail table
+- **Job 1 — Ingestion:** a file on disk → `Load_tbl` + a company detail table
   (e.g. `GpaFileDetail_tbl`).
 - **Job 2 — Processing:** the detail table → `Voyage_tbl` + `VoyageDetails_tbl`, plus
   the field-mapping tables (`FieldValue_tbl` → `FieldTypeValue_tbl` → `VoyageFieldMap_tbl`).
@@ -29,7 +29,7 @@ src/app/
 │   └── repositories/           # one per table; the place with DB queries (except the field-map proc)
 ├── ingestion/                  # JOB 1: file on disk -> raw company table
 │   ├── base.py                 #   reader/loader contracts
-│   ├── registry.py             #   FileTypeId -> (reader, loader)   <- add a company here
+│   ├── registry.py             #   LoadTypeId -> (reader, loader)   <- add a company here
 │   ├── runner.py               #   shared flow, one transaction per file
 │   └── gpa/                    #   GPA reader + loader (company-specific)
 ├── processing/                 # JOB 2: raw table -> Voyage + VoyageDetails + field maps
@@ -38,7 +38,7 @@ src/app/
 │   ├── validation.py           #   prevalidation: VOYAGE + WORK_DATE required
 │   ├── writer.py               #   VoyageWriter: writes voyages/details; field maps via proc
 │   ├── status.py               #   fallen-off classification (Called / Canceled)
-│   ├── registry.py             #   FileTypeId -> (detail repo, mapper)  <- add a company here
+│   ├── registry.py             #   LoadTypeId -> (detail repo, mapper)  <- add a company here
 │   ├── runner.py               #   shared 3-phase flow with resume
 │   └── gpa/mapper.py           #   GPA column mapping (company-specific)
 ├── forecast/                   # JOB 3: empty until built

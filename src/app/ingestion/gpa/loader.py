@@ -13,7 +13,7 @@ class GpaLoader(BaseLoader):
 
     def _to_model(self, file_id: int, row: dict) -> GpaFileDetail:
         return GpaFileDetail(
-            FileId=file_id,
+            LoadId=file_id,
             TERMINAL=self._text(row.get("TERMINAL")),
             WORK_DATE=self._date(row.get("WORK_DATE")),
             VESSEL=self._text(row.get("VESSEL")),
