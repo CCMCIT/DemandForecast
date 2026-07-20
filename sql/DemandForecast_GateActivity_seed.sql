@@ -3,7 +3,7 @@
 
    Kept separate from DemandForecast_seed.sql so the gate-activity feature's
    reference data is self-contained. Seeds:
-     - FileType_tbl        row 4 (Gate Activities) only; 1-3 are in the main seed
+     - LoadType_tbl        row 4 (Gate Activities) only; 1-3 are in the main seed
      - GateType            1 = In Gate, 2 = Out Gate
      - LengthMatch_tbl     how EquipLength was determined (1-4)
 
@@ -11,11 +11,11 @@
    rows). Run after DemandForecast_schema.sql + DemandForecast_GateActivity_schema.sql.
    ===================================================================== */
 
-/* ---------- FileType_tbl (Gate Activities) ---------- */
+/* ---------- LoadType_tbl (Gate Activities) ---------- */
 
-SET IDENTITY_INSERT DemandForecast.FileType_tbl ON;
+SET IDENTITY_INSERT DemandForecast.LoadType_tbl ON;
 
-MERGE DemandForecast.FileType_tbl AS tgt
+MERGE DemandForecast.LoadType_tbl AS tgt
 USING (VALUES
     (4, N'Gate Activities')
 ) AS src (LoadTypeId, Name)
@@ -24,7 +24,7 @@ WHEN NOT MATCHED BY TARGET THEN
     INSERT (LoadTypeId, Name)
     VALUES (src.LoadTypeId, src.Name);
 
-SET IDENTITY_INSERT DemandForecast.FileType_tbl OFF;
+SET IDENTITY_INSERT DemandForecast.LoadType_tbl OFF;
 GO
 
 /* ---------- GateType ---------- */

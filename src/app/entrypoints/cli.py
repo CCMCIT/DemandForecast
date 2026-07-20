@@ -46,7 +46,7 @@ _COMMANDS = {
         "python run.py process-next --count 5",
     ),
     "process-pending": (
-        "Process every file with LoadStatusId=2 (Inserted into FileDetail).",
+        "Process every file with LoadStatusId=2 (Inserted into LoadDetail).",
         "python run.py process-pending",
     ),
     "process-gate-activity": (
@@ -54,7 +54,7 @@ _COMMANDS = {
         "python run.py process-gate-activity --file-id 123",
     ),
     "process-gate-activity-pending": (
-        "Process every gate-activity file with LoadStatusId=2 (Inserted into FileDetail).",
+        "Process every gate-activity file with LoadStatusId=2 (Inserted into LoadDetail).",
         "python run.py process-gate-activity-pending",
     ),
     "import-status": (

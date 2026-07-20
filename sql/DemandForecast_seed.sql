@@ -1,6 +1,6 @@
 /* =====================================================================
    DemandForecast — idempotent seed of the lookup tables.
-   Seeds FileType_tbl, LoadStatus_tbl, VoyageStatus_tbl, Mode_tbl,
+   Seeds LoadType_tbl, LoadStatus_tbl, VoyageStatus_tbl, Mode_tbl,
    Direction_tbl, FieldType_tbl and the equipment-size FieldValue_tbl /
    FieldTypeValue_tbl rows with their exact ids (IDENTITY_INSERT ON)
    so code that references them by id (see src/app/lookups.py) and the writer,
@@ -9,19 +9,19 @@
    Safe to re-run: each MERGE inserts only the rows that are missing
    (WHEN NOT MATCHED BY TARGET), so existing rows are left untouched.
 
-   Gate-activity lookups (FileType 4, GateType, LengthMatch_tbl) are seeded
+   Gate-activity lookups (LoadType 4, GateType, LengthMatch_tbl) are seeded
    separately in DemandForecast_GateActivity_seed.sql.
 
    Run after DemandForecast_schema.sql.
    ===================================================================== */
 
-/* ---------- FileType_tbl ----------
+/* ---------- LoadType_tbl ----------
    The file sources. Ids mirror app.lookups.FileType. Gate Activities (4) is
    seeded in DemandForecast_GateActivity_seed.sql. */
 
-SET IDENTITY_INSERT DemandForecast.FileType_tbl ON;
+SET IDENTITY_INSERT DemandForecast.LoadType_tbl ON;
 
-MERGE DemandForecast.FileType_tbl AS tgt
+MERGE DemandForecast.LoadType_tbl AS tgt
 USING (VALUES
     (1, N'GPA 9-day vessel'),
     (2, N'NCSPA Imports'),
@@ -32,7 +32,7 @@ WHEN NOT MATCHED BY TARGET THEN
     INSERT (LoadTypeId, Name)
     VALUES (src.LoadTypeId, src.Name);
 
-SET IDENTITY_INSERT DemandForecast.FileType_tbl OFF;
+SET IDENTITY_INSERT DemandForecast.LoadType_tbl OFF;
 GO
 
 /* ---------- LoadStatus_tbl ----------
@@ -43,10 +43,10 @@ SET IDENTITY_INSERT DemandForecast.LoadStatus_tbl ON;
 
 MERGE DemandForecast.LoadStatus_tbl AS tgt
 USING (VALUES
-    (1,  N'Inserted into File'),
-    (2,  N'Inserted into FileDetail'),
-    (3,  N'Inserted into Voyage'),
-    (4,  N'Inserted into VoyageDetail'),
+    (1,  N'Inserted into Load'),
+    (2,  N'Inserted into LoadDetail'),
+    (3,  N'Inserted into Header'),
+    (4,  N'Inserted into Detail'),
     (5,  N'Inserted into FieldMap and all relevant tables'),
     (99, N'Error')
 ) AS src (LoadStatusId, Name)
