@@ -6,7 +6,7 @@ column. Resolution goes through the DB proc GateActivityFieldTypeValue_upsert (f
 create), so a value new to the dimension is created, not rejected -- the sets are open.
 
 A row's IDENTITY is its 10 columns (Date + the nine dimension columns); Units,
-Transactions and FileId are the mutable payload. On write, a row whose identity already
+Transactions and LoadId are the mutable payload. On write, a row whose identity already
 exists is UPDATED in place -- same GateActivityDetailId, temporal archives the prior
 version -- and only its payload changes. A new identity is inserted. Within one batch a
 repeated identity is collapsed last-wins (the DB unique constraint forbids two live rows
@@ -47,7 +47,7 @@ IDENTITY_COLUMNS = [
 ]
 
 # The columns updated when an identity already exists.
-PAYLOAD_COLUMNS = ["FileId", "Units", "Transactions"]
+PAYLOAD_COLUMNS = ["LoadId", "Units", "Transactions"]
 
 
 class FieldTypeValueResolver:
@@ -120,7 +120,7 @@ class GateActivityWriter:
             for attr, field_type, column in GATE_ACTIVITY_FIELD_MAP
         }
         return GateActivityDetail(
-            FileId=m.file_id,
+            LoadId=m.file_id,
             Date=m.date,
             EquipLength=m.equip_length,
             LengthMatchId=m.length_match_id,

@@ -1,6 +1,6 @@
 """Purpose: process CMS gate-activity files into GateActivityDetail_tbl.
 
-Driven through File_tbl, like the voyage runner: a file carries its FileTypeId and
+Driven through Load_tbl, like the voyage runner: a file carries its LoadTypeId and
 LoadStatusId, and processing advances the status. Gate activity has no phases -- it
 reads the file's staging rows, upserts each by its identity (Date + the nine dimension
 columns), and moves the file straight from INSERTED_INTO_FILE_DETAIL (2) to
@@ -17,7 +17,7 @@ new identity is inserted, so re-running is idempotent.
 """
 from app.lookups import FileType, LoadStatus
 from app.db.session import SessionLocal, session_scope
-from app.db.repositories.file_repository import FileRepository
+from app.db.repositories.load_repository import LoadRepository
 from app.db.repositories.cms_gate_activity_detail_repository import CmsGateActivityDetailRepository
 from app.db.repositories.gate_type_repository import GateTypeRepository
 from app.db.repositories.process_log_error_repository import ProcessLogErrorRepository
@@ -38,13 +38,13 @@ def process_file(file_id: int) -> int:
     """
     session = SessionLocal()
     try:
-        file = FileRepository(session).get(file_id)
+        file = LoadRepository(session).get(file_id)
         if file is None:
-            raise ValueError(f"No File with FileId {file_id}")
-        if file.FileTypeId != FileType.GATE_ACTIVITIES:
+            raise ValueError(f"No Load with LoadId {file_id}")
+        if file.LoadTypeId != FileType.GATE_ACTIVITIES:
             raise ValueError(
-                f"FileId {file_id} is not a Gate Activities file "
-                f"(FileTypeId={file.FileTypeId})"
+                f"LoadId {file_id} is not a Gate Activities file "
+                f"(LoadTypeId={file.LoadTypeId})"
             )
 
         rows = CmsGateActivityDetailRepository(session).get_by_file_id(file_id)
@@ -66,7 +66,7 @@ def process_file(file_id: int) -> int:
         session.rollback()
         _mark_error(file_id)
         ProcessLogErrorRepository.write(
-            f"Gate activity process failed for FileId {file_id}: {exc}"
+            f"Gate activity process failed for LoadId {file_id}: {exc}"
         )
         raise
     finally:
@@ -77,10 +77,10 @@ def process_pending() -> dict:
     """Process every gate-activity file at INSERTED_INTO_FILE_DETAIL (2). One file's
     failure never stops the rest: successes and failures are collected and returned."""
     with session_scope() as session:
-        files = FileRepository(session).get_by_type_and_status(
+        files = LoadRepository(session).get_by_type_and_status(
             FileType.GATE_ACTIVITIES, LoadStatus.INSERTED_INTO_FILE_DETAIL
         )
-        targets = [f.FileId for f in files]
+        targets = [f.LoadId for f in files]
 
     processed, failed = [], []
     for file_id in targets:
@@ -105,7 +105,7 @@ def _validate_gate_types(mapped, valid_ids: set[int]) -> None:
 def _mark_error(file_id: int) -> None:
     session = SessionLocal()
     try:
-        file = FileRepository(session).get(file_id)
+        file = LoadRepository(session).get(file_id)
         if file is not None:
             file.LoadStatusId = LoadStatus.ERROR
             session.commit()

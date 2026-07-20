@@ -24,7 +24,7 @@ class GateActivityDetail(Base):
     GateActivityDetailId: Mapped[int] = mapped_column(
         Integer, primary_key=True, autoincrement=True
     )
-    FileId: Mapped[int] = mapped_column(ForeignKey("DemandForecast.File_tbl.FileId"))
+    LoadId: Mapped[int] = mapped_column(ForeignKey("DemandForecast.Load_tbl.LoadId"))
     Date: Mapped[date] = mapped_column(Date)
     FieldTypeValueTruckerId: Mapped[int | None] = mapped_column(Integer)
     FieldTypeValueEquipTypeId: Mapped[int | None] = mapped_column(Integer)

@@ -15,7 +15,7 @@
    an UPDATE archives the prior row version into GateActivityDetailHistory_tbl.
 
    DRIFT NOTE: the live tables currently carry NO foreign keys. The voyage
-   tables constrain FileId -> File_tbl (and VoyageDetails -> FieldTypeValue);
+   tables constrain LoadId -> Load_tbl (and VoyageDetails -> FieldTypeValue);
    gate activity does not. This script reflects the live state (no FKs). To
    restore referential integrity, add the FKs listed at the bottom.
 
@@ -26,8 +26,8 @@ GO
 
 /* ---------- GateType (lookup) ---------- */
 
-IF OBJECT_ID('DemandForecast.GateType', 'U') IS NULL
-    CREATE TABLE DemandForecast.GateType (
+IF OBJECT_ID('DemandForecast.GateType_tbl', 'U') IS NULL
+    CREATE TABLE DemandForecast.GateType_tbl (
         GateTypeId int IDENTITY(1,1) NOT NULL,
         Name       nvarchar(50) NOT NULL,
         CONSTRAINT PK_GateType PRIMARY KEY (GateTypeId)
@@ -53,7 +53,7 @@ GO
 IF OBJECT_ID('DemandForecast.CmsGateActivityDetail_naum_tbl', 'U') IS NULL
     CREATE TABLE DemandForecast.CmsGateActivityDetail_naum_tbl (
         CmsGateActivityDetailId int IDENTITY(1,1) NOT NULL,
-        FileId              int NOT NULL,
+        LoadId              int NOT NULL,
         Date                date NOT NULL,
         TruckerName         nvarchar(200) NULL,
         EquipCode           nvarchar(50) NULL,
@@ -79,7 +79,7 @@ GO
 IF OBJECT_ID('DemandForecast.GateActivityDetail_tbl', 'U') IS NULL
     CREATE TABLE DemandForecast.GateActivityDetail_tbl (
         GateActivityDetailId         int IDENTITY(1,1) NOT NULL,
-        FileId                       int NOT NULL,
+        LoadId                       int NOT NULL,
         Date                         date NOT NULL,
         FieldTypeValueTruckerId      int NULL,
         FieldTypeValueEquipTypeId    int NULL,
@@ -117,11 +117,11 @@ GO
 
    ALTER TABLE DemandForecast.CmsGateActivityDetail_naum_tbl
        ADD CONSTRAINT FK_CmsGateActivityDetail_File
-       FOREIGN KEY (FileId) REFERENCES DemandForecast.File_tbl (FileId);
+       FOREIGN KEY (LoadId) REFERENCES DemandForecast.Load_tbl (LoadId);
 
    ALTER TABLE DemandForecast.GateActivityDetail_tbl
        ADD CONSTRAINT FK_GateActivityDetail_File
-       FOREIGN KEY (FileId) REFERENCES DemandForecast.File_tbl (FileId);
+       FOREIGN KEY (LoadId) REFERENCES DemandForecast.Load_tbl (LoadId);
    -- (GateTypeId / FieldTypeValue* columns are left unconstrained, matching live.)
 */
 

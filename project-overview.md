@@ -19,7 +19,7 @@ Shipping companies send daily files listing the vessel voyages expected at a por
 | 1 · Ingest | → | 2 · Process | → | 3 · Forecast |
 |---|---|---|---|---|
 | Read a company file, store the raw rows. | | Map raw rows into the shared voyage model + its attributes. | | Future — predict demand from voyage history. |
-| `→ File_tbl + GpaFileDetail_tbl` | | `→ Voyage_tbl + VoyageDetails_tbl + field maps` | | *(not built yet)* |
+| `→ Load_tbl + GpaFileDetail_tbl` | | `→ Voyage_tbl + VoyageDetails_tbl + field maps` | | *(not built yet)* |
 
 Each stage is a separate job. Adding a new company means adding *only that company's* reader/mapper — the shared flow never changes.
 
@@ -29,7 +29,7 @@ Each stage is a separate job. Adding a new company means adding *only that compa
   company file (CSV)
         |  ingest
         v
-  File_tbl              one row per file (name, type, load status)
+  Load_tbl              one row per file (name, type, load status)
   GpaFileDetail_tbl     one row per raw line in the file
         |  process
         v
