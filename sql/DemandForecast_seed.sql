@@ -124,7 +124,7 @@ SET IDENTITY_INSERT DemandForecast.FieldType_tbl ON;
 
 MERGE DemandForecast.FieldType_tbl AS tgt
 USING (VALUES
-    (1, N'Equipment Type', N'dbo.CMST_EquipmentType',   N'code',             N'EquipmentTypeId',   N'EquipmentTypeId in (36, 37, 38)', 1),
+    (1, N'Equipment Type', N'dbo.CMST_EquipmentType',   N'code',             N'EquipmentTypeId',   NULL,                               1),
     (2, N'Vessel',         NULL,                         NULL,                NULL,                 NULL,                               0),
     (3, N'Ocean Carrier',  N'dbo.CMST_Company',          N'ShortDisplayName', N'CompanyId',         N'CompanyStatusId = 1',             1),
     (4, N'Service',        NULL,                         NULL,                NULL,                 NULL,                               0),
