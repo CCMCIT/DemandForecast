@@ -1,7 +1,8 @@
 /* =====================================================================
    DemandForecast — idempotent seed of the lookup tables.
    Seeds FileType_tbl, LoadStatus_tbl, VoyageStatus_tbl, Mode_tbl,
-   Direction_tbl and FieldType_tbl with their exact ids (IDENTITY_INSERT ON)
+   Direction_tbl, FieldType_tbl and the equipment-size FieldValue_tbl /
+   FieldTypeValue_tbl rows with their exact ids (IDENTITY_INSERT ON)
    so code that references them by id (see src/app/lookups.py) and the writer,
    which resolves Mode/Direction by NAME, both line up.
 
@@ -138,4 +139,47 @@ WHEN NOT MATCHED BY TARGET THEN
     VALUES (src.FieldTypeId, src.FieldType, src.ExternalTableName, src.ExternalSearchColumn, src.ExternalIdColumn, src.ExternalWhereClause, src.ExternalNotifFlag);
 
 SET IDENTITY_INSERT DemandForecast.FieldType_tbl OFF;
+GO
+
+/* ---------- FieldValue_tbl (equipment container sizes) ----------
+   The three GPA container-size values. Ids 1..3 are relied on by
+   processing/gpa/mapper.py: GPA_COLUMN_MAP hardcodes
+   FieldTypeValueEquipTypeId 1/2/3 (20CH -> 1, 40CH -> 2, 45CH -> 3),
+   so these rows and their FieldTypeValue rows must exist with these ids. */
+
+SET IDENTITY_INSERT DemandForecast.FieldValue_tbl ON;
+
+MERGE DemandForecast.FieldValue_tbl AS tgt
+USING (VALUES
+    (1, N'20CH'),
+    (2, N'40CH'),
+    (3, N'45CH')
+) AS src (FieldValueId, FieldValue)
+ON tgt.FieldValueId = src.FieldValueId
+WHEN NOT MATCHED BY TARGET THEN
+    INSERT (FieldValueId, FieldValue)
+    VALUES (src.FieldValueId, src.FieldValue);
+
+SET IDENTITY_INSERT DemandForecast.FieldValue_tbl OFF;
+GO
+
+/* ---------- FieldTypeValue_tbl (Equipment Type -> the 3 container sizes) ----------
+   Pairs FieldType 1 (Equipment Type) with FieldValue 1..3. ExternalId is
+   pre-resolved to the CMST_EquipmentType ids (20CH -> 36, 40CH -> 37,
+   45CH -> 38); ExternalNotifFlag is NULL. Mirrors the dev DB. */
+
+SET IDENTITY_INSERT DemandForecast.FieldTypeValue_tbl ON;
+
+MERGE DemandForecast.FieldTypeValue_tbl AS tgt
+USING (VALUES
+    (1, 1, 1, 36, NULL),
+    (2, 1, 2, 37, NULL),
+    (3, 1, 3, 38, NULL)
+) AS src (FieldTypeValueId, FieldTypeId, FieldValueId, ExternalId, ExternalNotifFlag)
+ON tgt.FieldTypeValueId = src.FieldTypeValueId
+WHEN NOT MATCHED BY TARGET THEN
+    INSERT (FieldTypeValueId, FieldTypeId, FieldValueId, ExternalId, ExternalNotifFlag)
+    VALUES (src.FieldTypeValueId, src.FieldTypeId, src.FieldValueId, src.ExternalId, src.ExternalNotifFlag);
+
+SET IDENTITY_INSERT DemandForecast.FieldTypeValue_tbl OFF;
 GO
