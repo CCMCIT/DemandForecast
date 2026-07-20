@@ -7,7 +7,7 @@
 
      - GateType                        lookup (1 = In Gate, 2 = Out Gate)
      - LengthMatch_tbl                 lookup: how EquipLength was determined
-     - CmsGateActivityDetail_naum_tbl  CMS raw staging (one row per file row)
+     - CmsGateActivityDetail_tbl       CMS raw staging (one row per file row)
      - GateActivityDetail_tbl          processed target, SYSTEM-VERSIONED
 
    The target's IDENTITY is the 10 columns of UQ_GateActivityDetail_Identity
@@ -18,9 +18,6 @@
    tables constrain LoadId -> Load_tbl (and VoyageDetails -> FieldTypeValue);
    gate activity does not. This script reflects the live state (no FKs). To
    restore referential integrity, add the FKs listed at the bottom.
-
-   NAME NOTE: the staging table keeps the temporary '_naum' suffix; it will be
-   renamed to CmsGateActivityDetail_tbl once finalized.
    ===================================================================== */
 GO
 
@@ -50,8 +47,8 @@ GO
 
 /* ---------- CMS raw staging ---------- */
 
-IF OBJECT_ID('DemandForecast.CmsGateActivityDetail_naum_tbl', 'U') IS NULL
-    CREATE TABLE DemandForecast.CmsGateActivityDetail_naum_tbl (
+IF OBJECT_ID('DemandForecast.CmsGateActivityDetail_tbl', 'U') IS NULL
+    CREATE TABLE DemandForecast.CmsGateActivityDetail_tbl (
         CmsGateActivityDetailId int IDENTITY(1,1) NOT NULL,
         LoadId              int NOT NULL,
         Date                date NOT NULL,
@@ -115,7 +112,7 @@ GO
 /* ---------- Optional: restore referential integrity (drift) ----------
    The live tables have no FKs; run these to match the voyage-table pattern.
 
-   ALTER TABLE DemandForecast.CmsGateActivityDetail_naum_tbl
+   ALTER TABLE DemandForecast.CmsGateActivityDetail_tbl
        ADD CONSTRAINT FK_CmsGateActivityDetail_File
        FOREIGN KEY (LoadId) REFERENCES DemandForecast.Load_tbl (LoadId);
 
@@ -132,7 +129,7 @@ GO
        ADD CONSTRAINT FK_GateActivityDetail_LengthMatch
        FOREIGN KEY (LengthMatchId) REFERENCES DemandForecast.LengthMatch_tbl (LengthMatchId);
 
-   ALTER TABLE DemandForecast.CmsGateActivityDetail_naum_tbl
+   ALTER TABLE DemandForecast.CmsGateActivityDetail_tbl
        ADD CONSTRAINT FK_CmsGateActivityDetail_LengthMatch
        FOREIGN KEY (LengthMatchId) REFERENCES DemandForecast.LengthMatch_tbl (LengthMatchId);
 */

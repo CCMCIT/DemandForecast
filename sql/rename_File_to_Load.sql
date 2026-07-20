@@ -84,8 +84,8 @@ IF COL_LENGTH('DemandForecast.Voyage_tbl', 'FileId') IS NOT NULL
     EXEC sp_rename 'DemandForecast.Voyage_tbl.FileId', 'LoadId', 'COLUMN';  -- temporal -> VoyageHistory_tbl
 -- Guarded: these tables are absent on GPA-only envs (e.g. UAT). COL_LENGTH is
 -- NULL when the table/column is missing, so the rename skips instead of aborting.
-IF COL_LENGTH('DemandForecast.CmsGateActivityDetail_naum_tbl', 'FileId') IS NOT NULL
-    EXEC sp_rename 'DemandForecast.CmsGateActivityDetail_naum_tbl.FileId', 'LoadId', 'COLUMN';
+IF COL_LENGTH('DemandForecast.CmsGateActivityDetail_tbl', 'FileId') IS NOT NULL
+    EXEC sp_rename 'DemandForecast.CmsGateActivityDetail_tbl.FileId', 'LoadId', 'COLUMN';
 IF COL_LENGTH('DemandForecast.GateActivityDetail_tbl', 'FileId') IS NOT NULL
     EXEC sp_rename 'DemandForecast.GateActivityDetail_tbl.FileId', 'LoadId', 'COLUMN';  -- temporal -> GateActivityDetailHistory_tbl
 

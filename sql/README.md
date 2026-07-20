@@ -26,8 +26,8 @@ environment.
 renames must be guarded, or the whole transaction aborts:
 
 ```sql
-IF COL_LENGTH('DemandForecast.CmsGateActivityDetail_naum_tbl', 'FileId') IS NOT NULL
-    EXEC sp_rename 'DemandForecast.CmsGateActivityDetail_naum_tbl.FileId', 'LoadId', 'COLUMN';
+IF COL_LENGTH('DemandForecast.CmsGateActivityDetail_tbl', 'FileId') IS NOT NULL
+    EXEC sp_rename 'DemandForecast.CmsGateActivityDetail_tbl.FileId', 'LoadId', 'COLUMN';
 IF COL_LENGTH('DemandForecast.GateActivityDetail_tbl', 'FileId') IS NOT NULL
     EXEC sp_rename 'DemandForecast.GateActivityDetail_tbl.FileId', 'LoadId', 'COLUMN';
 ```
