@@ -119,5 +119,4 @@ To add a company: a reader + loader under `ingestion/<company>/` and a mapper un
 - [setup.md](documentation/setup.md) — requirements, `.env`, running the CLI
 - [cli.md](documentation/cli.md) — every command, the LoadStatus lifecycle, end-to-end
 - [tests.md](documentation/tests.md) — unit vs integration tests
-- [explanation.md](documentation/explanation.md) — the field-mapping tables in detail
-- [DemandForecast_db_schema_v2.drawio](documentation/DemandForecast_db_schema_v2.drawio) — the full ER diagram
+- [DemandForecast_db_schema.drawio](documentation/DemandForecast_db_schema.drawio) — the full ER diagram

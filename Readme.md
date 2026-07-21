@@ -59,11 +59,10 @@ Every command also takes `--env dev|uat|prod` (default `dev`).
 | Requirements, `.env` (dev/uat/prod), venv, running the CLI | [setup](documentation/setup.md) |
 | CLI commands, `--env`, LoadStatus lifecycle, end-to-end | [cli](documentation/cli.md) |
 | Running unit & integration tests | [tests](documentation/tests.md) |
-| How the field-mapping tables work | [explanation](documentation/explanation.md) |
 
-New here? Start with [**project-overview.html**](project-overview.html) — a one-page
-visual tour (open in a browser). The full ER diagram is
-[documentation/DemandForecast_db_schema_v2.drawio](documentation/DemandForecast_db_schema_v2.drawio).
+New here? Start with [**project-overview.md**](project-overview.md) — a one-page
+visual tour. The full ER diagram is
+[documentation/DemandForecast_db_schema.drawio](documentation/DemandForecast_db_schema.drawio).
 
 ## Branching
 
