@@ -9,4 +9,4 @@ __pycache__/
 .idea/
 
 # pytest
-.pytest_cache/
+.pytest_cache/.env
