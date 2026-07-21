@@ -17,6 +17,8 @@ Every command also accepts --env <dev|uat|prod> to pick the target database
 """
 import argparse
 import sys
+import time
+from functools import partial
 
 from app.config.settings import EXCEL_WATCH_FOLDER, Env, DEFAULT_ENV
 from app.db import session as db_session
@@ -212,10 +214,18 @@ def run_command(args) -> None:
         )
     elif args.command == "process":
         print(f"  processing LoadId={args.file_id}")
-        count = processing_runner.process_file(args.file_id, progress=_print_progress)
-        print(f"Processed {count} detail row(s) for LoadId={args.file_id}")
+        started = time.perf_counter()
+        count = processing_runner.process_file(
+            args.file_id, progress=partial(_print_progress, "detail rows")
+        )
+        print(
+            f"Processed {count} detail row(s) for LoadId={args.file_id} "
+            f"in {_format_elapsed(time.perf_counter() - started)}"
+        )
     elif args.command == "process-next":
-        result = processing_runner.process_next(args.count, progress=_print_progress)
+        result = processing_runner.process_next(
+            args.count, progress=partial(_print_progress, "detail rows")
+        )
         print(
             f"Next {args.count} run complete. "
             f"processed={len(result['processed'])} "
@@ -223,7 +233,9 @@ def run_command(args) -> None:
             f"failed={len(result['failed'])}"
         )
     elif args.command == "process-pending":
-        result = processing_runner.process_pending(progress=_print_progress)
+        result = processing_runner.process_pending(
+            progress=partial(_print_progress, "detail rows")
+        )
         print(
             f"Pending run complete. "
             f"processed={len(result['processed'])} "
@@ -232,10 +244,16 @@ def run_command(args) -> None:
         )
     elif args.command == "process-gate-activity":
         print(f"  processing LoadId={args.file_id}")
+        started = time.perf_counter()
         count = gate_activity_runner.process_file(args.file_id)
-        print(f"Processed {count} gate-activity row(s) for LoadId={args.file_id}")
+        print(
+            f"Processed {count} gate-activity row(s) for LoadId={args.file_id} "
+            f"in {_format_elapsed(time.perf_counter() - started)}"
+        )
     elif args.command == "process-gate-activity-pending":
-        result = gate_activity_runner.process_pending()
+        result = gate_activity_runner.process_pending(
+            progress=partial(_print_progress, "gate rows")
+        )
         print(
             f"Gate activity pending run complete. "
             f"processed={len(result['processed'])} "
@@ -251,22 +269,51 @@ def run_command(args) -> None:
     print("Completed.")
 
 
-def _print_progress(event: str, **data) -> None:
-    """Live per-file output for process-pending. Verbs padded so LoadId lines up."""
+# Per-load wall-clock timing. Start time is stamped when a file starts processing
+# and consumed when it finishes, so each "processed"/"failed" line shows how long
+# that one load took.
+_load_start: dict[int, float] = {}
+
+
+def _format_elapsed(seconds: float) -> str:
+    """A short human duration: '3.4s', '7m 23s', or '1h 04m 09s'."""
+    if seconds < 60:
+        return f"{seconds:.1f}s"
+    minutes, secs = divmod(int(seconds), 60)
+    if minutes < 60:
+        return f"{minutes}m {secs:02d}s"
+    hours, minutes = divmod(minutes, 60)
+    return f"{hours}h {minutes:02d}m {secs:02d}s"
+
+
+def _load_elapsed(file_id: int) -> str:
+    """Elapsed time for a load since its 'processing' event (formatted)."""
+    started = _load_start.pop(file_id, None)
+    return _format_elapsed(time.perf_counter() - started) if started is not None else "?"
+
+
+def _print_progress(row_noun: str, event: str, **data) -> None:
+    """Live per-file output for the process-* commands, with per-load timing.
+    `row_noun` labels the count on the 'processed' line ('detail rows' / 'gate rows');
+    bind it per command with functools.partial. Verbs padded so LoadId lines up. Gate
+    activity simply never emits the 'phase'/'skipped' events, so one printer serves all."""
     if event == "start":
         print(f"{data['total']} file(s) to process.")
     elif event == "processing":
+        _load_start[data["file_id"]] = time.perf_counter()
         print()
         print(f"  {'processing':<10} LoadId={data['file_id']}")
     elif event == "phase":
         print(f"    phase {data['number']} ({data['name']}): {data['state']}")
     elif event == "processed":
         print()
-        print(f"  {'processed':<10} LoadId={data['file_id']} ({data['count']} detail rows)")
+        print(f"  {'processed':<10} LoadId={data['file_id']} ({data['count']} {row_noun}) "
+              f"in {_load_elapsed(data['file_id'])}")
     elif event == "skipped":
         print(f"  {'skipped':<10} LoadId={data['file_id']} (no processor for its FileType)")
     elif event == "failed":
-        print(f"  {'failed':<10} LoadId={data['file_id']}: {data['error']}")
+        print(f"  {'failed':<10} LoadId={data['file_id']}: {data['error']} "
+              f"(after {_load_elapsed(data['file_id'])})")
 
 
 def _print_folder_progress(event: str, **data) -> None:
