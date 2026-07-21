@@ -5,6 +5,8 @@
 First working version of DemandForecast. It takes a daily file all the way from
 disk into the voyage tables, ready for forecasting later.
 
+- **Gate activity** — ingest CMS gate files and process them into
+  `GateActivityDetail_tbl`, tracking container gate in/out moves.
 - **File ingestion** — read a daily GPA CSV file and load it into `File_tbl` and
   `GpaFileDetail_tbl`. One file at a time or a whole folder.
 - **Voyage processing** — turn the ingested rows into `Voyage_tbl`,
