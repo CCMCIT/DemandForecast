@@ -73,23 +73,37 @@ def process_file(file_id: int) -> int:
         session.close()
 
 
-def process_pending() -> dict:
+def process_pending(progress=None) -> dict:
     """Process every gate-activity file at INSERTED_INTO_FILE_DETAIL (2). One file's
-    failure never stops the rest: successes and failures are collected and returned."""
+    failure never stops the rest: successes and failures are collected and returned.
+
+    Optional `progress(event, **data)` callback fires for live reporting: 'start'
+    (total), then 'processing'/'processed'/'failed' per file. The runner does no
+    printing itself."""
     with session_scope() as session:
         files = LoadRepository(session).get_by_type_and_status(
             FileType.GATE_ACTIVITIES, LoadStatus.INSERTED_INTO_FILE_DETAIL
         )
         targets = [f.LoadId for f in files]
 
+    _report(progress, "start", total=len(targets))
+
     processed, failed = [], []
     for file_id in targets:
+        _report(progress, "processing", file_id=file_id)
         try:
             count = process_file(file_id)
             processed.append((file_id, count))
+            _report(progress, "processed", file_id=file_id, count=count)
         except Exception as exc:
             failed.append((file_id, str(exc)))
+            _report(progress, "failed", file_id=file_id, error=str(exc))
     return {"processed": processed, "failed": failed}
+
+
+def _report(progress, event, **data) -> None:
+    if progress is not None:
+        progress(event, **data)
 
 
 def _validate_gate_types(mapped, valid_ids: set[int]) -> None:
