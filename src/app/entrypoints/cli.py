@@ -6,14 +6,14 @@ by a worker or API entrypoint without change. Commands:
 
   ingest          --path <file> --type <FileType>   file on disk -> Load_tbl + detail table
   ingest-folder   --type <FileType> [--folder <dir>] every file in a folder -> Load_tbl + detail table
-  process         --file-id <id>                    one loaded file -> Voyage_tbl + VoyageDetails_tbl
+  process         --load-id <id>                    one loaded file -> Voyage_tbl + VoyageDetails_tbl
   process-next    --count <n>                       the next n pending files -> Voyage(+Details)
   process-pending                                   every file with LoadStatusId=2 -> Voyage(+Details)
-  process-gate-activity --file-id <id>              one file's CMS rows -> GateActivityDetail_tbl
+  process-gate-activity --load-id <id>              one file's CMS rows -> GateActivityDetail_tbl
   process-gate-activity-pending                     every gate-activity file at LoadStatusId=2
-  process-on-terminal --file-id <id>                one file's CMS rows -> OnTermDetail_tbl
+  process-on-terminal --load-id <id>                one file's CMS rows -> OnTermDetail_tbl
   process-on-terminal-pending                       every on-terminal file at LoadStatusId=2
-  process-out-of-service --file-id <id>             one file's CMS rows -> OutOfServiceUnitsDetail_tbl
+  process-out-of-service --load-id <id>             one file's CMS rows -> OutOfServiceUnitsDetail_tbl
   process-out-of-service-pending                    every out-of-service file at LoadStatusId=2
 
 Every command also accepts --env <dev|uat|prod> to pick the target database
@@ -47,7 +47,7 @@ _COMMANDS = {
     ),
     "process": (
         "Map one loaded file into Voyage_tbl and VoyageDetails_tbl.",
-        "python run.py process --file-id 123",
+        "python run.py process --load-id 123",
     ),
     "process-next": (
         "Process the next N pending files (LoadStatusId 3 then 2).",
@@ -59,7 +59,7 @@ _COMMANDS = {
     ),
     "process-gate-activity": (
         "Map one file's CMS gate-activity rows into GateActivityDetail_tbl.",
-        "python run.py process-gate-activity --file-id 123",
+        "python run.py process-gate-activity --load-id 123",
     ),
     "process-gate-activity-pending": (
         "Process every gate-activity file with LoadStatusId=2 (Inserted into LoadDetail).",
@@ -67,7 +67,7 @@ _COMMANDS = {
     ),
     "process-on-terminal": (
         "Map one file's CMS on-terminal rows into OnTermDetail_tbl.",
-        "python run.py process-on-terminal --file-id 123",
+        "python run.py process-on-terminal --load-id 123",
     ),
     "process-on-terminal-pending": (
         "Process every on-terminal file with LoadStatusId=2 (Inserted into LoadDetail).",
@@ -75,7 +75,7 @@ _COMMANDS = {
     ),
     "process-out-of-service": (
         "Map one file's CMS out-of-service rows into OutOfServiceUnitsDetail_tbl.",
-        "python run.py process-out-of-service --file-id 123",
+        "python run.py process-out-of-service --load-id 123",
     ),
     "process-out-of-service-pending": (
         "Process every out-of-service file with LoadStatusId=2 (Inserted into LoadDetail).",
@@ -100,7 +100,7 @@ def _commands_help() -> str:
     lines.append("global options (every command):")
     lines.append("")
     lines.append("  --env dev|uat|prod   Target database environment (default: dev).")
-    lines.append("       Eg: python run.py process --env uat --file-id 123")
+    lines.append("       Eg: python run.py process --env uat --load-id 123")
     lines.append("")
     return "\n".join(lines)
 
@@ -166,7 +166,7 @@ def main(argv=None) -> None:
     )
 
     process = _add_command(sub, "process", parents=[common])
-    process.add_argument("--file-id", required=True, type=int, dest="file_id", help="LoadId to process")
+    process.add_argument("--load-id", required=True, type=int, dest="load_id", help="LoadId to process")
 
     process_next = _add_command(sub, "process-next", parents=[common])
     process_next.add_argument(
@@ -178,21 +178,21 @@ def main(argv=None) -> None:
 
     process_gate_activity = _add_command(sub, "process-gate-activity", parents=[common])
     process_gate_activity.add_argument(
-        "--file-id", required=True, type=int, dest="file_id", help="LoadId to process"
+        "--load-id", required=True, type=int, dest="load_id", help="LoadId to process"
     )
 
     _add_command(sub, "process-gate-activity-pending", parents=[common])
 
     process_on_terminal = _add_command(sub, "process-on-terminal", parents=[common])
     process_on_terminal.add_argument(
-        "--file-id", required=True, type=int, dest="file_id", help="LoadId to process"
+        "--load-id", required=True, type=int, dest="load_id", help="LoadId to process"
     )
 
     _add_command(sub, "process-on-terminal-pending", parents=[common])
 
     process_out_of_service = _add_command(sub, "process-out-of-service", parents=[common])
     process_out_of_service.add_argument(
-        "--file-id", required=True, type=int, dest="file_id", help="LoadId to process"
+        "--load-id", required=True, type=int, dest="load_id", help="LoadId to process"
     )
 
     _add_command(sub, "process-out-of-service-pending", parents=[common])
@@ -253,13 +253,13 @@ def run_command(args) -> None:
             f"failed={len(result['failed'])}"
         )
     elif args.command == "process":
-        print(f"  processing LoadId={args.file_id}")
+        print(f"  processing LoadId={args.load_id}")
         started = time.perf_counter()
         count = processing_runner.process_file(
-            args.file_id, progress=partial(_print_progress, "detail rows")
+            args.load_id, progress=partial(_print_progress, "detail rows")
         )
         print(
-            f"Processed {count} detail row(s) for LoadId={args.file_id} "
+            f"Processed {count} detail row(s) for LoadId={args.load_id} "
             f"in {_format_elapsed(time.perf_counter() - started)}"
         )
     elif args.command == "process-next":
@@ -283,11 +283,11 @@ def run_command(args) -> None:
             f"failed={len(result['failed'])}"
         )
     elif args.command == "process-gate-activity":
-        print(f"  processing LoadId={args.file_id}")
+        print(f"  processing LoadId={args.load_id}")
         started = time.perf_counter()
-        count = gate_activity_runner.process_file(args.file_id)
+        count = gate_activity_runner.process_file(args.load_id)
         print(
-            f"Processed {count} gate-activity row(s) for LoadId={args.file_id} "
+            f"Processed {count} gate-activity row(s) for LoadId={args.load_id} "
             f"in {_format_elapsed(time.perf_counter() - started)}"
         )
     elif args.command == "process-gate-activity-pending":
@@ -300,11 +300,11 @@ def run_command(args) -> None:
             f"failed={len(result['failed'])}"
         )
     elif args.command == "process-on-terminal":
-        print(f"  processing LoadId={args.file_id}")
+        print(f"  processing LoadId={args.load_id}")
         started = time.perf_counter()
-        count = on_terminal_runner.process_file(args.file_id)
+        count = on_terminal_runner.process_file(args.load_id)
         print(
-            f"Processed {count} on-terminal row(s) for LoadId={args.file_id} "
+            f"Processed {count} on-terminal row(s) for LoadId={args.load_id} "
             f"in {_format_elapsed(time.perf_counter() - started)}"
         )
     elif args.command == "process-on-terminal-pending":
@@ -317,11 +317,11 @@ def run_command(args) -> None:
             f"failed={len(result['failed'])}"
         )
     elif args.command == "process-out-of-service":
-        print(f"  processing LoadId={args.file_id}")
+        print(f"  processing LoadId={args.load_id}")
         started = time.perf_counter()
-        count = out_of_service_runner.process_file(args.file_id)
+        count = out_of_service_runner.process_file(args.load_id)
         print(
-            f"Processed {count} out-of-service row(s) for LoadId={args.file_id} "
+            f"Processed {count} out-of-service row(s) for LoadId={args.load_id} "
             f"in {_format_elapsed(time.perf_counter() - started)}"
         )
     elif args.command == "process-out-of-service-pending":
