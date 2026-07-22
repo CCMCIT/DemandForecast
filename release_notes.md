@@ -7,6 +7,11 @@ disk into the voyage tables, ready for forecasting later.
 
 - **Gate activity** — ingest CMS gate files and process them into
   `GateActivityDetail_tbl`, tracking container gate in/out moves.
+- **On terminal** — process CMS on-terminal rows into `OnTermDetail_tbl`,
+  resolving equipment type and location to their field values and tracking
+  container counts on terminal. Reprocessing a file updates the data while
+  keeping history. Available from the CLI (`process-on-terminal`,
+  `process-on-terminal-pending`) and the web UI.
 - **File ingestion** — read a daily GPA CSV file and load it into `File_tbl` and
   `GpaFileDetail_tbl`. One file at a time or a whole folder.
 - **Voyage processing** — turn the ingested rows into `Voyage_tbl`,

@@ -9,4 +9,7 @@ __pycache__/
 .idea/
 
 # pytest
-.pytest_cache/.env
+.pytest_cache/
+
+# Local environment (secrets — never commit)
+.env
