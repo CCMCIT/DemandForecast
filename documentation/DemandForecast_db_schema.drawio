@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net">
   <diagram name="Page-1" id="kaVRo81VIs2B3YFD7KDR">
-    <mxGraphModel dx="1945" dy="914" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="2000" dy="748" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -22,6 +22,12 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="8M2eEvPhz_aiRI2shzpS-18" edge="1" parent="1" source="VEAa2O26n6UEFuyFMqfj-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="8M2eEvPhz_aiRI2shzpS-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="LFCvl6RQKRwmVRvmOY_Y-6" edge="1" parent="1" source="VEAa2O26n6UEFuyFMqfj-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="LFCvl6RQKRwmVRvmOY_Y-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="LFCvl6RQKRwmVRvmOY_Y-22" edge="1" parent="1" source="VEAa2O26n6UEFuyFMqfj-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="LFCvl6RQKRwmVRvmOY_Y-16">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="VEAa2O26n6UEFuyFMqfj-4" parent="1" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" value="Load_tbl" vertex="1">
@@ -92,7 +98,7 @@
           <mxGeometry height="70" width="160" y="30" as="geometry" />
         </mxCell>
         <mxCell id="VEAa2O26n6UEFuyFMqfj-24" parent="1" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" value="&lt;span style=&quot;color: rgba(0, 0, 0, 0.9); font-family: &amp;quot;Segoe UI VSS (Regular)&amp;quot;, &amp;quot;Segoe UI&amp;quot;, -apple-system, BlinkMacSystemFont, Roboto, &amp;quot;Helvetica Neue&amp;quot;, Helvetica, Ubuntu, Arial, sans-serif, &amp;quot;Apple Color Emoji&amp;quot;, &amp;quot;Segoe UI Emoji&amp;quot;, &amp;quot;Segoe UI Symbol&amp;quot;; font-size: 14px; text-align: start; background-color: rgb(255, 255, 255);&quot;&gt;Direction&lt;/span&gt;&lt;span style=&quot;background-color: light-dark(rgb(255, 255, 255), rgb(18, 18, 18)); color: light-dark(rgba(0, 0, 0, 0.9), rgba(237, 237, 237, 0.9)); font-family: &amp;quot;Segoe UI VSS (Regular)&amp;quot;, &amp;quot;Segoe UI&amp;quot;, -apple-system, BlinkMacSystemFont, Roboto, &amp;quot;Helvetica Neue&amp;quot;, Helvetica, Ubuntu, Arial, sans-serif, &amp;quot;Apple Color Emoji&amp;quot;, &amp;quot;Segoe UI Emoji&amp;quot;, &amp;quot;Segoe UI Symbol&amp;quot;; font-size: 14px; text-align: start;&quot;&gt;_tbl&lt;/span&gt;" vertex="1">
-          <mxGeometry height="80" width="150" x="1290.6363636363635" y="1409.3636363636363" as="geometry" />
+          <mxGeometry height="80" width="150" x="1279.9963636363634" y="1409.3636363636363" as="geometry" />
         </mxCell>
         <mxCell id="VEAa2O26n6UEFuyFMqfj-25" parent="VEAa2O26n6UEFuyFMqfj-24" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;html=1;whiteSpace=wrap;labelBorderColor=none;textShadow=0;" value="&lt;ol&gt;&lt;li&gt;DirectionId&amp;nbsp;&lt;b&gt;PK&lt;/b&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;DirectionName&lt;/span&gt;&lt;/b&gt;&lt;/li&gt;&lt;/ol&gt;" vertex="1">
           <mxGeometry height="50" width="150" y="30" as="geometry" />
@@ -157,8 +163,8 @@
         <mxCell id="VEAa2O26n6UEFuyFMqfj-41" edge="1" parent="1" source="VEAa2O26n6UEFuyFMqfj-40" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.485;exitY=0.867;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="VEAa2O26n6UEFuyFMqfj-24">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="1268.6363636363635" y="1389.3636363636363" />
-              <mxPoint x="1365.6363636363635" y="1389.3636363636363" />
+              <mxPoint x="1268.5" y="1390" />
+              <mxPoint x="1355" y="1390" />
             </Array>
             <mxPoint x="1588.6363636363635" y="1399.3636363636363" as="sourcePoint" />
             <mxPoint x="1510.6363636363635" y="1429.3636363636363" as="targetPoint" />
@@ -170,7 +176,7 @@
         <mxCell id="VEAa2O26n6UEFuyFMqfj-43" parent="VEAa2O26n6UEFuyFMqfj-42" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;html=1;whiteSpace=wrap;labelBorderColor=none;textShadow=0;" value="&lt;ol&gt;&lt;li&gt;LoadStatusId &lt;b&gt;PK&lt;/b&gt;&lt;/li&gt;&lt;li&gt;Name&lt;/li&gt;&lt;/ol&gt;" vertex="1">
           <mxGeometry height="70" width="160" y="30" as="geometry" />
         </mxCell>
-        <mxCell id="VEAa2O26n6UEFuyFMqfj-46" parent="1" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" value="&lt;span style=&quot;color: rgba(0, 0, 0, 0.9); font-family: &amp;quot;Segoe UI VSS (Regular)&amp;quot;, &amp;quot;Segoe UI&amp;quot;, -apple-system, BlinkMacSystemFont, Roboto, &amp;quot;Helvetica Neue&amp;quot;, Helvetica, Ubuntu, Arial, sans-serif, &amp;quot;Apple Color Emoji&amp;quot;, &amp;quot;Segoe UI Emoji&amp;quot;, &amp;quot;Segoe UI Symbol&amp;quot;; font-size: 14px; text-align: start; background-color: rgb(255, 255, 255);&quot;&gt;LoadTypeId&lt;/span&gt;" vertex="1">
+        <mxCell id="VEAa2O26n6UEFuyFMqfj-46" parent="1" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" value="&lt;span style=&quot;color: rgba(0, 0, 0, 0.9); font-family: &amp;quot;Segoe UI VSS (Regular)&amp;quot;, &amp;quot;Segoe UI&amp;quot;, -apple-system, BlinkMacSystemFont, Roboto, &amp;quot;Helvetica Neue&amp;quot;, Helvetica, Ubuntu, Arial, sans-serif, &amp;quot;Apple Color Emoji&amp;quot;, &amp;quot;Segoe UI Emoji&amp;quot;, &amp;quot;Segoe UI Symbol&amp;quot;; font-size: 14px; text-align: start; background-color: rgb(255, 255, 255);&quot;&gt;LoadType_tbl&lt;/span&gt;" vertex="1">
           <mxGeometry height="100" width="160" x="500" y="1194.36" as="geometry" />
         </mxCell>
         <mxCell id="VEAa2O26n6UEFuyFMqfj-47" parent="VEAa2O26n6UEFuyFMqfj-46" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;html=1;whiteSpace=wrap;labelBorderColor=none;textShadow=0;" value="&lt;ol&gt;&lt;li&gt;LoadTypeId&amp;nbsp;&lt;b&gt;PK&lt;/b&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;Name&lt;br&gt;&lt;/span&gt;&lt;/b&gt;&lt;/li&gt;&lt;/ol&gt;" vertex="1">
@@ -267,10 +273,87 @@
           <mxGeometry height="248" width="205" y="30" as="geometry" />
         </mxCell>
         <mxCell id="8M2eEvPhz_aiRI2shzpS-16" parent="1" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" value="&lt;span style=&quot;color: rgba(0, 0, 0, 0.9); font-family: &amp;quot;Segoe UI VSS (Regular)&amp;quot;, &amp;quot;Segoe UI&amp;quot;, -apple-system, BlinkMacSystemFont, Roboto, &amp;quot;Helvetica Neue&amp;quot;, Helvetica, Ubuntu, Arial, sans-serif, &amp;quot;Apple Color Emoji&amp;quot;, &amp;quot;Segoe UI Emoji&amp;quot;, &amp;quot;Segoe UI Symbol&amp;quot;; font-size: 14px; text-align: start; background-color: rgb(255, 255, 255);&quot;&gt;GateType_tbl&lt;/span&gt;" vertex="1">
-          <mxGeometry height="80" width="150" x="1351.6400000000003" y="1899" as="geometry" />
+          <mxGeometry height="80" width="150" x="1390.0000000000002" y="1899" as="geometry" />
         </mxCell>
         <mxCell id="8M2eEvPhz_aiRI2shzpS-17" parent="8M2eEvPhz_aiRI2shzpS-16" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;html=1;whiteSpace=wrap;labelBorderColor=none;textShadow=0;" value="&lt;ol&gt;&lt;li&gt;GateTypeId&lt;/li&gt;&lt;li&gt;Name&lt;/li&gt;&lt;/ol&gt;" vertex="1">
           <mxGeometry height="50" width="150" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="LFCvl6RQKRwmVRvmOY_Y-5" edge="1" parent="1" source="LFCvl6RQKRwmVRvmOY_Y-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="LFCvl6RQKRwmVRvmOY_Y-3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="LFCvl6RQKRwmVRvmOY_Y-1" parent="1" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" value="CmsOnTermDetail_tbl" vertex="1">
+          <mxGeometry height="170" width="205" x="858.14" y="2050" as="geometry" />
+        </mxCell>
+        <mxCell id="LFCvl6RQKRwmVRvmOY_Y-2" parent="LFCvl6RQKRwmVRvmOY_Y-1" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;html=1;whiteSpace=wrap;labelBorderColor=none;textShadow=0;" value="&lt;br style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;&lt;ol&gt;&lt;li&gt;CmsOnTermDetailId&lt;/li&gt;&lt;li&gt;LoadId&lt;/li&gt;&lt;li&gt;Date&lt;/li&gt;&lt;li&gt;EquipCode&lt;/li&gt;&lt;li&gt;LocationName&lt;/li&gt;&lt;li&gt;Units&lt;/li&gt;&lt;/ol&gt;" vertex="1">
+          <mxGeometry height="140" width="205" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="LFCvl6RQKRwmVRvmOY_Y-9" edge="1" parent="1" source="LFCvl6RQKRwmVRvmOY_Y-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="LFCvl6RQKRwmVRvmOY_Y-7" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="LFCvl6RQKRwmVRvmOY_Y-3" parent="1" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" value="OnTermDetail_tbl" vertex="1">
+          <mxGeometry height="170" width="205" x="1130" y="2050" as="geometry" />
+        </mxCell>
+        <mxCell id="LFCvl6RQKRwmVRvmOY_Y-4" parent="LFCvl6RQKRwmVRvmOY_Y-3" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;html=1;whiteSpace=wrap;labelBorderColor=none;textShadow=0;" value="&lt;br style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;&lt;ol&gt;&lt;li&gt;OnTermDetailId&lt;/li&gt;&lt;li&gt;LoadId&lt;/li&gt;&lt;li&gt;Date&lt;/li&gt;&lt;li&gt;FieldTypeValueEquipTypeId&lt;/li&gt;&lt;li&gt;FieldTypeValueLocationId&lt;/li&gt;&lt;li&gt;Units&lt;/li&gt;&lt;/ol&gt;" vertex="1">
+          <mxGeometry height="140" width="205" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="LFCvl6RQKRwmVRvmOY_Y-7" parent="1" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" value="OnTermDetailHistory_tbl" vertex="1">
+          <mxGeometry height="170" width="205" x="1415" y="2050" as="geometry" />
+        </mxCell>
+        <mxCell id="LFCvl6RQKRwmVRvmOY_Y-8" parent="LFCvl6RQKRwmVRvmOY_Y-7" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;html=1;whiteSpace=wrap;labelBorderColor=none;textShadow=0;" value="&lt;br style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;&lt;ol&gt;&lt;li&gt;OnTermDetailId&lt;/li&gt;&lt;li&gt;LoadId&lt;/li&gt;&lt;li&gt;Date&lt;/li&gt;&lt;li&gt;FieldTypeValueEquipTypeId&lt;/li&gt;&lt;li&gt;FieldTypeValueLocationId&lt;/li&gt;&lt;li&gt;Units&lt;/li&gt;&lt;/ol&gt;" vertex="1">
+          <mxGeometry height="140" width="205" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="LFCvl6RQKRwmVRvmOY_Y-12" edge="1" parent="1" source="8M2eEvPhz_aiRI2shzpS-8" style="endArrow=none;dashed=1;html=1;rounded=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <Array as="points">
+              <mxPoint x="1530" y="1390" />
+            </Array>
+            <mxPoint x="1540" y="1409.36" as="sourcePoint" />
+            <mxPoint x="1530" y="1140" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="LFCvl6RQKRwmVRvmOY_Y-13" edge="1" parent="1" source="LFCvl6RQKRwmVRvmOY_Y-4" style="endArrow=none;dashed=1;html=1;rounded=0;exitX=1.006;exitY=0.286;exitDx=0;exitDy=0;exitPerimeter=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <Array as="points">
+              <mxPoint x="1370" y="2100" />
+              <mxPoint x="1370" y="1890" />
+              <mxPoint x="1400" y="1820" />
+            </Array>
+            <mxPoint x="1660" y="1905" as="sourcePoint" />
+            <mxPoint x="1400" y="1540" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="LFCvl6RQKRwmVRvmOY_Y-14" edge="1" parent="1" source="LFCvl6RQKRwmVRvmOY_Y-15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="LFCvl6RQKRwmVRvmOY_Y-18">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="LFCvl6RQKRwmVRvmOY_Y-15" parent="1" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" value="CmsOutOfServiceUnitsDetail_tbl" vertex="1">
+          <mxGeometry height="170" width="205" x="858.14" y="2300" as="geometry" />
+        </mxCell>
+        <mxCell id="LFCvl6RQKRwmVRvmOY_Y-16" parent="LFCvl6RQKRwmVRvmOY_Y-15" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;html=1;whiteSpace=wrap;labelBorderColor=none;textShadow=0;" value="&lt;br style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;&lt;ol&gt;&lt;li&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255)); text-align: center;&quot;&gt;CmsOutOfServiceUnitsDetail&lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;Id&lt;/span&gt;&lt;/li&gt;&lt;li&gt;LoadId&lt;/li&gt;&lt;li&gt;Date&lt;/li&gt;&lt;li&gt;EquipCode&lt;/li&gt;&lt;li&gt;LocationName&lt;/li&gt;&lt;li&gt;Units&lt;/li&gt;&lt;/ol&gt;" vertex="1">
+          <mxGeometry height="140" width="205" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="LFCvl6RQKRwmVRvmOY_Y-26" edge="1" parent="1" source="LFCvl6RQKRwmVRvmOY_Y-18" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="LFCvl6RQKRwmVRvmOY_Y-24" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="LFCvl6RQKRwmVRvmOY_Y-18" parent="1" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" value="OutOfServiceUnitsDetail_tbl" vertex="1">
+          <mxGeometry height="170" width="205" x="1130.0000000000002" y="2300" as="geometry" />
+        </mxCell>
+        <mxCell id="LFCvl6RQKRwmVRvmOY_Y-19" parent="LFCvl6RQKRwmVRvmOY_Y-18" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;html=1;whiteSpace=wrap;labelBorderColor=none;textShadow=0;" value="&lt;br style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;&lt;ol&gt;&lt;li&gt;&lt;span style=&quot;text-align: center;&quot;&gt;OutOfServiceUnitsDetail&lt;/span&gt;Id&lt;/li&gt;&lt;li&gt;LoadId&lt;/li&gt;&lt;li&gt;Date&lt;/li&gt;&lt;li&gt;FieldTypeValueEquipTypeId&lt;/li&gt;&lt;li&gt;FieldTypeValueLocationId&lt;/li&gt;&lt;li&gt;Units&lt;/li&gt;&lt;/ol&gt;" vertex="1">
+          <mxGeometry height="140" width="205" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="LFCvl6RQKRwmVRvmOY_Y-24" parent="1" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" value="OutOfServiceUnitsDetailHistory_tbl" vertex="1">
+          <mxGeometry height="170" width="205" x="1415.0000000000002" y="2300" as="geometry" />
+        </mxCell>
+        <mxCell id="LFCvl6RQKRwmVRvmOY_Y-25" parent="LFCvl6RQKRwmVRvmOY_Y-24" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;html=1;whiteSpace=wrap;labelBorderColor=none;textShadow=0;" value="&lt;br style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;&lt;ol&gt;&lt;li&gt;&lt;span style=&quot;text-align: center;&quot;&gt;OutOfServiceUnitsDetail&lt;/span&gt;Id&lt;/li&gt;&lt;li&gt;LoadId&lt;/li&gt;&lt;li&gt;Date&lt;/li&gt;&lt;li&gt;FieldTypeValueEquipTypeId&lt;/li&gt;&lt;li&gt;FieldTypeValueLocationId&lt;/li&gt;&lt;li&gt;Units&lt;/li&gt;&lt;/ol&gt;" vertex="1">
+          <mxGeometry height="140" width="205" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="LFCvl6RQKRwmVRvmOY_Y-27" edge="1" parent="1" source="LFCvl6RQKRwmVRvmOY_Y-19" style="endArrow=none;dashed=1;html=1;rounded=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <Array as="points">
+              <mxPoint x="1370" y="2320" />
+            </Array>
+            <mxPoint x="1570" y="2740" as="sourcePoint" />
+            <mxPoint x="1370" y="2100" as="targetPoint" />
+          </mxGeometry>
         </mxCell>
       </root>
     </mxGraphModel>
