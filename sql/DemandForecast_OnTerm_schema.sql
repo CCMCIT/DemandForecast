@@ -17,9 +17,8 @@
    created here. Field-value resolution reuses DemandForecast.GateActivity-
    FieldTypeValue_upsert, so no on-terminal proc is needed.
 
-   DRIFT NOTE: like the gate-activity tables, these carry NO foreign keys and NO
-   unique identity constraint, matching the live DB. To harden them, run the
-   statements at the bottom.
+   DRIFT NOTE: like the gate-activity tables, these carry NO foreign keys, matching
+   the live DB. To add them, run the statements at the bottom.
    ===================================================================== */
 GO
 
@@ -58,9 +57,28 @@ IF OBJECT_ID('DemandForecast.OnTermDetail_tbl', 'U') IS NULL
     WITH (SYSTEM_VERSIONING = ON (HISTORY_TABLE = DemandForecast.OnTermDetailHistory_tbl));
 GO
 
-/* ---------- Optional: harden the tables (drift) ----------
-   The live tables have no FKs and no unique identity constraint; run these to
-   match the voyage-table pattern / DB-guarantee the upsert.
+/* ---------- Unique identity (the upsert key) ----------
+   One live row per (Date + the two dimension columns), so the writer's insert-vs-
+   update decision is DB-guaranteed: a matching identity UPDATEs in place (temporal
+   archives the prior version), a new one INSERTs. NULLs compare equal in a UNIQUE
+   constraint, so a row with NULL dimensions still collapses to one live row.
+   Idempotent. */
+
+IF NOT EXISTS (
+    SELECT 1 FROM sys.objects
+    WHERE name = 'UQ_OnTermDetail_Identity'
+      AND parent_object_id = OBJECT_ID('DemandForecast.OnTermDetail_tbl')
+)
+    ALTER TABLE DemandForecast.OnTermDetail_tbl
+        ADD CONSTRAINT UQ_OnTermDetail_Identity UNIQUE (
+            Date,
+            FieldTypeValueEquipTypeId,
+            FieldTypeValueLocationId
+        );
+GO
+
+/* ---------- Optional: restore referential integrity (drift) ----------
+   The live tables have no FKs; run these to match the voyage-table pattern.
 
    ALTER TABLE DemandForecast.CmsOnTermDetail_tbl
        ADD CONSTRAINT FK_CmsOnTermDetail_Load
@@ -69,11 +87,4 @@ GO
    ALTER TABLE DemandForecast.OnTermDetail_tbl
        ADD CONSTRAINT FK_OnTermDetail_Load
        FOREIGN KEY (LoadId) REFERENCES DemandForecast.Load_tbl (LoadId);
-
-   -- One live row per (Date + dimensions), so the writer's upsert-by-identity is
-   -- DB-guaranteed (NULLs compare equal in a UNIQUE constraint):
-   ALTER TABLE DemandForecast.OnTermDetail_tbl
-       ADD CONSTRAINT UQ_OnTermDetail_Identity UNIQUE (
-           Date, FieldTypeValueEquipTypeId, FieldTypeValueLocationId
-       );
 */
