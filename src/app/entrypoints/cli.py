@@ -13,6 +13,8 @@ by a worker or API entrypoint without change. Commands:
   process-gate-activity-pending                     every gate-activity file at LoadStatusId=2
   process-on-terminal --file-id <id>                one file's CMS rows -> OnTermDetail_tbl
   process-on-terminal-pending                       every on-terminal file at LoadStatusId=2
+  process-out-of-service --file-id <id>             one file's CMS rows -> OutOfServiceUnitsDetail_tbl
+  process-out-of-service-pending                    every out-of-service file at LoadStatusId=2
 
 Every command also accepts --env <dev|uat|prod> to pick the target database
 (default: dev). The numbered listing shown by `--help` is generated from _COMMANDS.
@@ -29,6 +31,7 @@ from app.ingestion import runner as ingestion_runner
 from app.processing.voyage import runner as processing_runner
 from app.processing.gate_activity import runner as gate_activity_runner
 from app.processing.on_terminal import runner as on_terminal_runner
+from app.processing.out_of_service import runner as out_of_service_runner
 
 
 # name -> (one-line description, example). Drives both the numbered --help
@@ -69,6 +72,14 @@ _COMMANDS = {
     "process-on-terminal-pending": (
         "Process every on-terminal file with LoadStatusId=2 (Inserted into LoadDetail).",
         "python run.py process-on-terminal-pending",
+    ),
+    "process-out-of-service": (
+        "Map one file's CMS out-of-service rows into OutOfServiceUnitsDetail_tbl.",
+        "python run.py process-out-of-service --file-id 123",
+    ),
+    "process-out-of-service-pending": (
+        "Process every out-of-service file with LoadStatusId=2 (Inserted into LoadDetail).",
+        "python run.py process-out-of-service-pending",
     ),
     "import-status": (
         "Show how many files were imported successfully out of the total.",
@@ -179,6 +190,13 @@ def main(argv=None) -> None:
 
     _add_command(sub, "process-on-terminal-pending", parents=[common])
 
+    process_out_of_service = _add_command(sub, "process-out-of-service", parents=[common])
+    process_out_of_service.add_argument(
+        "--file-id", required=True, type=int, dest="file_id", help="LoadId to process"
+    )
+
+    _add_command(sub, "process-out-of-service-pending", parents=[common])
+
     _add_command(sub, "import-status", parents=[common])
 
     args = parser.parse_args(argv)
@@ -208,6 +226,8 @@ _START_MESSAGES = {
     "process-gate-activity-pending": "Processing...",
     "process-on-terminal": "Processing...",
     "process-on-terminal-pending": "Processing...",
+    "process-out-of-service": "Processing...",
+    "process-out-of-service-pending": "Processing...",
     "import-status": "Checking...",
 }
 
@@ -293,6 +313,23 @@ def run_command(args) -> None:
         )
         print(
             f"On terminal pending run complete. "
+            f"processed={len(result['processed'])} "
+            f"failed={len(result['failed'])}"
+        )
+    elif args.command == "process-out-of-service":
+        print(f"  processing LoadId={args.file_id}")
+        started = time.perf_counter()
+        count = out_of_service_runner.process_file(args.file_id)
+        print(
+            f"Processed {count} out-of-service row(s) for LoadId={args.file_id} "
+            f"in {_format_elapsed(time.perf_counter() - started)}"
+        )
+    elif args.command == "process-out-of-service-pending":
+        result = out_of_service_runner.process_pending(
+            progress=partial(_print_progress, "out-of-service rows")
+        )
+        print(
+            f"Out of service pending run complete. "
             f"processed={len(result['processed'])} "
             f"failed={len(result['failed'])}"
         )
