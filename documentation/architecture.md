@@ -82,3 +82,13 @@ duplicates). Equipment type is encoded on `VoyageDetails.FieldTypeValueEquipType
 
 The shared files — `session`, `base`, `voyage/field_mapping`, both runners, and `voyage/writer` —
 never change.
+
+## Database schema
+
+The full ER diagram, exported from `DemandForecast_db_schema.drawio`:
+
+![Database schema (1)](DemandForecast_db_schema1.png)
+
+![Database schema (2)](DemandForecast_db_schema2.png)
+
+![Database schema (3)](DemandForecast_db_schema3.png)
