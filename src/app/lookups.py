@@ -13,6 +13,7 @@ class FileType(IntEnum):
     NCSPA_EXPORTS = 3    # 'NCSPA Exports'
     GATE_ACTIVITIES = 4  # 'Gate Activities'
     ON_TERMINAL = 5      # 'On Terminal'
+    OUT_OF_SERVICE = 6   # 'Out of Service'
 
 
 class LoadStatus(IntEnum):
