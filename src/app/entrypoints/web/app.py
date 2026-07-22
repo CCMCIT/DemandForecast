@@ -43,6 +43,7 @@ _CLI_COMMANDS = {
     "process-next": "process-next",
     "process-gate-activity-pending": "process-gate-activity-pending",
     "process-on-terminal-pending": "process-on-terminal-pending",
+    "process-out-of-service-pending": "process-out-of-service-pending",
 }
 
 # One local user -> at most one running job. A background thread reads the child's

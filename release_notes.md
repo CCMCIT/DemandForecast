@@ -31,3 +31,8 @@ disk into the voyage tables, ready for forecasting later.
   match). Behaviour is unchanged. This is a breaking database change: run
   `sql/rename_File_to_Load.sql` against each environment before deploying, or
   the app will not find the old columns.
+- **Out of service** — process CMS out-of-service rows into
+  `OutOfServiceUnitsDetail_tbl`, resolving equipment type and location to their
+  field values and tracking out-of-service unit counts. Reprocessing a file
+  updates the data while keeping history. Available from the CLI
+  (`process-out-of-service`, `process-out-of-service-pending`) and the web UI.

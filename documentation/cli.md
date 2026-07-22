@@ -34,7 +34,7 @@ python run.py ingest-folder --type GPA --folder "D:/incoming"
 ### `process` — one loaded file → voyages, details, field maps
 
 ```powershell
-python run.py process --file-id 123
+python run.py process --load-id 123
 ```
 
 - Processes the file in three phases (voyages → details → field maps) and sets
@@ -66,7 +66,7 @@ python run.py process-pending
 ### `process-gate-activity` — one file's CMS gate-activity rows → `GateActivityDetail_tbl`
 
 ```powershell
-python run.py process-gate-activity --file-id 123
+python run.py process-gate-activity --load-id 123
 ```
 
 - For a gate-activity file (`LoadTypeId = 4`). Reads its `CmsGateActivityDetail` staging
@@ -122,7 +122,7 @@ neutrally (e.g. *Inserted into Detail*) once both sources use it.
 python run.py ingest --path "C:/files/NineDayVessel_091720251700.csv" --type GPA
 
 # process that one file...
-python run.py process --file-id 123
+python run.py process --load-id 123
 
 # ...or process everything that's ready
 python run.py process-pending
