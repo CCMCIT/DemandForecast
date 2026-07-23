@@ -15,6 +15,8 @@ from sqlalchemy import bindparam, text
 from sqlalchemy.engine import Engine
 
 from app.lookups import FieldType, VoyageStatus
+from forecast import training
+from forecast.trained_model import TrainedModel
 
 # Lookup ids with no enum in app.lookups yet. Add them there if they spread
 # beyond this module.
@@ -138,6 +140,14 @@ class ReadGateway:
         )
         return pd.read_sql(sql, self._engine, params={"m": model_id})
 
+    def metrics(self, model_id: int) -> pd.DataFrame:
+        """In-sample diagnostics for a model as (metric_name, metric_value)."""
+        sql = text(
+            "SELECT metric_name, metric_value "
+            "FROM DemandForecast.model_metrics_tbl WHERE model_id = :m"
+        )
+        return pd.read_sql(sql, self._engine, params={"m": model_id})
+
     def predictions_vs_actuals(self, model_id: int) -> pd.DataFrame:
         """Off the model_predictions view: point, band, lead time, and the
         realized actual joined from actuals_tbl (NULL until backfilled)."""
@@ -155,6 +165,15 @@ class ReadGateway:
             "WHERE feature_name IN :names"
         ).bindparams(bindparam("names", expanding=True))
         return pd.read_sql(sql, self._engine, params={"names": list(feature_names)})
+
+    def feature_names(self, feature_ids: Sequence[int]) -> pd.DataFrame:
+        """(feature_id, feature_name) for the given ids - the reverse of
+        feature_ids(), used when reconstructing a stored model's design."""
+        sql = text(
+            "SELECT feature_id, feature_name FROM DemandForecast.features_tbl "
+            "WHERE feature_id IN :ids"
+        ).bindparams(bindparam("ids", expanding=True))
+        return pd.read_sql(sql, self._engine, params={"ids": [int(i) for i in feature_ids]})
 
     def training_actuals(
         self,
@@ -304,3 +323,82 @@ class ReadGateway:
             params["asof_max"] = dt.datetime.combine(end_date, dt.time.min) - lead
 
         return pd.read_sql(sql, self._engine, params=params, parse_dates=["observation_date"])
+
+    # -- loading a STORED model --------------------------------------------
+
+    def covariance(self, model_id: int) -> pd.DataFrame:
+        """The full (X'X)^-1 for a model as (row_feature_id, col_feature_id,
+        covariance_value). FLOAT in, float out - no Decimal round-trip, because
+        the stored value IS the model, not an approximation of one held
+        elsewhere."""
+        sql = text(
+            "SELECT row_feature_id, col_feature_id, covariance_value "
+            "FROM DemandForecast.model_covariance_tbl WHERE model_id = :m"
+        )
+        return pd.read_sql(sql, self._engine, params={"m": model_id})
+
+    def model_parameters(self, model_id: int) -> dict[str, str]:
+        """Training configuration as {parameter_name: parameter_value}. Values
+        are strings by design (see model_parameters_tbl); callers coerce."""
+        sql = text(
+            "SELECT parameter_name, parameter_value "
+            "FROM DemandForecast.model_parameters_tbl WHERE model_id = :m"
+        )
+        df = pd.read_sql(sql, self._engine, params={"m": model_id})
+        return dict(zip(df.parameter_name, df.parameter_value))
+
+    def model_definition(self, model_id: int) -> pd.Series:
+        """One row from the model_definition view, including is_scoreable."""
+        sql = text("SELECT * FROM DemandForecast.model_definition WHERE model_id = :m")
+        df = pd.read_sql(sql, self._engine, params={"m": model_id})
+        if df.empty:
+            raise ValueError(f"model_id={model_id} is not registered.")
+        return df.iloc[0]
+
+    def load_trained_model(self, model_id: int) -> TrainedModel:
+        """Reconstruct the scoring object entirely from stored rows.
+
+        This is what replaces re-fitting at scoring time. Everything the
+        prediction interval needs is now persisted: coefficients, the full
+        (X'X)^-1, and residual_std_error / residual_df from model_metrics_tbl.
+
+        On the float round-trip this module warns about elsewhere: that warning
+        is about reading coefficients back to reconstruct a model you already
+        hold in memory more precisely. Here the stored rows ARE the model - the
+        canonical definition - so reading them as float is not a degradation,
+        it is the point. DECIMAL(18,8) sits comfortably inside float64.
+
+        Raises if the model is not scoreable rather than silently substituting a
+        partial matrix, because a wrong leverage term still yields a
+        plausible-looking band.
+        """
+        coefficients = self.coefficients(model_id)
+        if coefficients.empty:
+            raise ValueError(f"model_id={model_id} has no coefficients registered.")
+
+        metrics = self.metrics(model_id)
+        by_name = dict(zip(metrics.metric_name, metrics.metric_value))
+        for required in ("residual_std_error", "residual_df"):
+            if required not in by_name:
+                raise ValueError(
+                    f"model_id={model_id} has no '{required}' metric; the prediction "
+                    "interval cannot be reconstructed."
+                )
+
+        intercept = self.feature_ids([training.INTERCEPT_FEATURE_NAME])
+        if intercept.empty:
+            raise ValueError(
+                f"'{training.INTERCEPT_FEATURE_NAME}' is not registered in features_tbl."
+            )
+
+        return training.trained_model_from_storage(
+            model_id=model_id,
+            coefficients=dict(
+                zip(coefficients.feature_id.astype(int),
+                    coefficients.coefficient_value.astype(float))
+            ),
+            covariance=self.covariance(model_id),
+            residual_std_error=float(by_name["residual_std_error"]),
+            residual_df=int(by_name["residual_df"]),
+            intercept_feature_id=int(intercept.iloc[0].feature_id),
+        )
