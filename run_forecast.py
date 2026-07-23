@@ -18,6 +18,8 @@ Run from the project root with the virtualenv active:
         --end 2025-06-30 --modified-by <account>
     python run_forecast.py train --env dev --model-name <name> --target <feature> \
         --predictors <a> <b> --start 2023-01-01 --end 2025-06-30 --modified-by <account>
+    python run_forecast.py outgate-score --env dev --model-id <id> --equip-length 20 \
+        --train-start 2026-02-01 --train-end 2026-06-30 --modified-by <account>
     python run_forecast.py dow-train --env dev --modified-by <account>
     python run_forecast.py dow-score --env dev --model-id <id> --modified-by <account>
 
@@ -42,6 +44,7 @@ for path in (_SRC, _FORECAST):
 # is the only step needed to make it launchable.
 _COMMANDS = {
     "outgate-train": "pipelines.outgate_train_run",
+    "outgate-score": "pipelines.outgate_score_run",
     "train": "pipelines.train_run",
     "dow-train": "day_of_week_train_run",
     "dow-score": "day_of_week_score_run",
