@@ -114,11 +114,29 @@ def build_design(
     dates = pd.to_datetime(frame["observation_date"])
     imports_column = imports_feature_name(equip_length, lookback_days)
 
+    imports = frame[imports_column].astype(float).reset_index(drop=True)
+    if imports.nunique() <= 1:
+        # A constant predictor carries no information and makes X rank-deficient;
+        # statsmodels' pseudo-inverse would return a fit anyway, with a
+        # meaningless zero coefficient on the only non-calendar term. The usual
+        # cause is import_window returning nothing - a point-in-time read whose
+        # as-of instants predate the start of system versioning - which
+        # daily_frame() then zero-fills into a column of zeros. Fail loudly
+        # instead: this is a data-coverage problem, not a modelling choice.
+        raise ValueError(
+            f"'{imports_column}' is constant ({imports.iloc[0]:g}) across "
+            f"{len(imports)} days, so it cannot be fitted. The usual cause is an "
+            "empty import_window read: check that voyage system-versioning "
+            "history covers (start_date - as_of_lead_days) - see "
+            "sql/diagnose_temporal_coverage.sql - or re-run with "
+            "--current-voyage-values to confirm the window is otherwise sound."
+        )
+
     design = pd.concat(
         [
             _observed_dummies(dates.dt.day_name(), DOW_ORDER, DOW_PREFIX),
             _observed_dummies(dates.dt.month_name(), MONTH_ORDER, MONTH_PREFIX),
-            frame[[imports_column]].astype(float).reset_index(drop=True),
+            imports.rename(imports_column),
         ],
         axis=1,
     )
