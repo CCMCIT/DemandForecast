@@ -114,20 +114,14 @@ def build_design(
     dates = pd.to_datetime(frame["observation_date"])
     imports_column = imports_feature_name(equip_length, lookback_days)
 
-    dow = pd.Categorical(dates.dt.day_name(), categories=DOW_ORDER, ordered=True)
-    month = pd.Categorical(dates.dt.month_name(), categories=MONTH_ORDER, ordered=True)
-
     design = pd.concat(
         [
-            pd.get_dummies(dow, prefix=DOW_PREFIX, drop_first=True).astype(float),
-            pd.get_dummies(month, prefix=MONTH_PREFIX, drop_first=True).astype(float),
+            _observed_dummies(dates.dt.day_name(), DOW_ORDER, DOW_PREFIX),
+            _observed_dummies(dates.dt.month_name(), MONTH_ORDER, MONTH_PREFIX),
             frame[[imports_column]].astype(float).reset_index(drop=True),
         ],
         axis=1,
     )
-
-    empty = [c for c in design.columns if design[c].sum() == 0.0]
-    design = design.drop(columns=empty)
 
     target = frame["outgate_transactions"].astype(float).reset_index(drop=True)
     design.index = target.index
@@ -137,3 +131,30 @@ def build_design(
 def retained_feature_names(design: pd.DataFrame) -> Sequence[str]:
     """Feature rows this fit will reference, excluding the intercept."""
     return list(design.columns)
+
+
+def _observed_dummies(values, categories, prefix) -> pd.DataFrame:
+    """One-hot `values`, keep only levels that OCCUR, and drop the first of
+    those as the baseline.
+
+    Dropping the first *category* instead - what get_dummies(drop_first=True)
+    does - is only safe when that category is present in the data. If the window
+    excludes it (a Feb-Jun window never sees January), the baseline is absent,
+    every retained dummy in the block sums to 1 across all rows, and the block
+    becomes perfectly collinear with the intercept. The fit still returns via
+    statsmodels' pseudo-inverse, so nothing raises - it silently reports a
+    rank-deficient model whose coefficients are one arbitrary solution among
+    infinitely many, and whose standard errors are not interpretable.
+
+    Dropping the first OBSERVED level keeps the baseline rows all-zero, which is
+    what makes the block independent of the intercept. It also subsumes the old
+    all-zero-column filter: unobserved levels are never emitted at all.
+    """
+    observed = [c for c in categories if (values == c).any()]
+    if not observed:
+        raise ValueError(f"No observed levels for '{prefix}' in this window.")
+    retained = observed[1:]   # observed[0] is the baseline, folded into the intercept
+    frame = pd.DataFrame(
+        {f"{prefix}_{level}": (values == level).to_numpy(dtype=float) for level in retained}
+    )
+    return frame.reset_index(drop=True)
