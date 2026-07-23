@@ -121,29 +121,40 @@ def _verify_against_registry(*, model_id, rebuilt, feature_id_of, reads) -> None
     if stored.empty:
         raise ValueError(f"model_id={model_id} has no coefficients in model_coefficients_tbl.")
 
+    # Both frames carry coefficient_value, so pandas suffixes BOTH sides:
+    # coefficient_value_rebuilt / coefficient_value_stored. Neither survives
+    # unsuffixed. Names come from the rebuilt side only, so a stored-only row
+    # has a NaN feature_name - fall back to its feature_id when reporting.
     merged = (
         rebuilt.assign(feature_id=rebuilt["feature_name"].map(feature_id_of))
         .merge(stored, on="feature_id", how="outer", suffixes=("_rebuilt", "_stored"))
     )
-    absent = merged["coefficient_value_rebuilt"].isna() | merged["coefficient_value"].isna()
-    if absent.any():
+    labels = merged["feature_name"].fillna(
+        "feature_id=" + merged["feature_id"].astype("Int64").astype(str)
+    )
+
+    only_rebuilt = merged["coefficient_value_stored"].isna()
+    only_stored = merged["coefficient_value_rebuilt"].isna()
+    if only_rebuilt.any() or only_stored.any():
         raise ValueError(
-            f"Rebuilt fit does not have the same feature set as model_id={model_id}: "
-            f"{merged.loc[absent, 'feature_name'].tolist()}. The training window passed "
-            "here is almost certainly not the one the model was registered from."
+            f"Rebuilt fit does not have the same feature set as model_id={model_id}. "
+            f"In the rebuild but not stored: {labels[only_rebuilt].tolist()}; "
+            f"stored but not in the rebuild: {labels[only_stored].tolist()}. "
+            "The training window passed here is almost certainly not the one the "
+            "model was registered from."
         )
 
     delta = (
         merged["coefficient_value_rebuilt"].astype(float)
-        - merged["coefficient_value"].astype(float)
+        - merged["coefficient_value_stored"].astype(float)
     ).abs()
     worst = float(delta.max())
     if worst > _COEF_TOLERANCE:
-        offender = merged.loc[delta.idxmax(), "feature_name"]
         raise ValueError(
-            f"Rebuilt coefficients differ from model_id={model_id} (worst: {offender}, "
-            f"|delta|={worst:.3e} > {_COEF_TOLERANCE:.0e}). Check --train-start / "
-            "--train-end and the voyage-value mode match the registered run."
+            f"Rebuilt coefficients differ from model_id={model_id} (worst: "
+            f"{labels[delta.idxmax()]}, |delta|={worst:.3e} > {_COEF_TOLERANCE:.0e}). "
+            "Check that --train-start / --train-end and the voyage-value mode match "
+            "the registered run."
         )
     log.info("Rebuild matches model_id=%d (max |delta| = %.2e).", model_id, worst)
 
