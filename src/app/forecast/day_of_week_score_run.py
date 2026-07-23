@@ -23,7 +23,8 @@ import logging
 
 import pandas as pd
 
-from db.engine import engine
+from app.config.settings import DEFAULT_ENV, Env
+from db import engine as engine_module
 from db.reads import ReadGateway
 from db.writes import WriteGateway
 from forecast import training
@@ -115,6 +116,12 @@ def main(argv=None) -> None:
     p = argparse.ArgumentParser(
         description="Score the day-of-week model one day ahead and store the run."
     )
+    p.add_argument(
+        "--env",
+        choices=[e.value for e in Env],
+        default=DEFAULT_ENV.value,
+        help="Database environment: dev, uat or prod (default: dev).",
+    )
     p.add_argument("--model-id", required=True, type=int,
                    help="existing registered model_id to score under (from a register run)")
     p.add_argument("--excel", default=DEFAULT_EXCEL, help="path to the gate-transactions extract")
@@ -132,6 +139,13 @@ def main(argv=None) -> None:
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
 
+    # Bind the engine to the chosen environment before any DB work, exactly as
+    # entrypoints/cli.py does with db_session.configure().
+    env = Env(args.env)
+    engine_module.configure(env)
+    log.info("Target database environment: %s.", env.value)
+    engine = engine_module.get_engine()
+
     result = run_day_of_week_scoring(
         model_id=args.model_id,
         excel_path=args.excel,
@@ -145,7 +159,7 @@ def main(argv=None) -> None:
     )
 
     stored = result["stored"]
-    print(f"\n=== Day-of-week scoring run (model_id={args.model_id}) ===")
+    print(f"\n=== Day-of-week scoring run (env={env.value}, model_id={args.model_id}) ===")
     print(f"as_of={args.as_of.isoformat()}  target_date={result['target_date'].isoformat()} "
           f"({pd.Timestamp(result['target_date']).day_name()})  "
           f"input_batch_id={result['input_batch_id']}")
