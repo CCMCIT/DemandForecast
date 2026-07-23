@@ -30,7 +30,8 @@ import logging
 
 import pandas as pd
 
-from db.engine import engine
+from app.config.settings import DEFAULT_ENV, Env
+from db import engine as engine_module
 from db.reads import ReadGateway
 from db.writes import WriteGateway
 from forecast import training
@@ -135,10 +136,16 @@ def run_day_of_week_training(
     )
 
 
-# --- CLI (wires the shared engine to the gateways) --------------------------
+# --- CLI (binds the engine to --env, then wires it to the gateways) ---------
 def main(argv=None) -> None:
     p = argparse.ArgumentParser(
         description="Train the day-of-week model and register it in DemandForecast."
+    )
+    p.add_argument(
+        "--env",
+        choices=[e.value for e in Env],
+        default=DEFAULT_ENV.value,
+        help="Database environment: dev, uat or prod (default: dev).",
     )
     p.add_argument("--excel", default=DEFAULT_EXCEL, help="path to the gate-transactions extract")
     p.add_argument("--date-column", default="Date")
@@ -160,6 +167,13 @@ def main(argv=None) -> None:
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
 
+    # Bind the engine to the chosen environment before any DB work, exactly as
+    # entrypoints/cli.py does with db_session.configure().
+    env = Env(args.env)
+    engine_module.configure(env)
+    log.info("Target database environment: %s.", env.value)
+    engine = engine_module.get_engine()
+
     result = run_day_of_week_training(
         excel_path=args.excel,
         date_column=args.date_column,
@@ -174,8 +188,9 @@ def main(argv=None) -> None:
         model_version=args.model_version,
     )
     print(
-        f"Registered model_id={result.model_id} version={result.model_version} "
-        f"R^2={result.r_squared:.4f} n={result.n_observations}"
+        f"[{env.value}] Registered model_id={result.model_id} "
+        f"version={result.model_version} R^2={result.r_squared:.4f} "
+        f"n={result.n_observations}"
     )
 
 
