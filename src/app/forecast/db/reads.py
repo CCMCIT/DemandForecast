@@ -36,64 +36,87 @@ ON_DOCK_LOCATION_CODES = ("GPA - Garden City", "GPA - Garden City 3.0")
 FORECASTABLE_VOYAGE_STATUSES = (VoyageStatus.TO_CALL, VoyageStatus.CALLED)
 
 
+# --- import_window SQL ------------------------------------------------------
+#
+# Shape note: this does NOT build a date spine and range-join voyages to it.
+# A voyage worked on day w contributes to exactly the target dates
+# w+1 .. w+lookback_days, so the rows are fanned out over a small offsets list
+# and target_date is derived. That turns a range join - which SQL Server cannot
+# seek, and so nested-loops at (spine rows x voyage rows) - into an equijoin
+# against 4 rows. Equivalence:
+#     w >= target - lookback AND w < target  <=>  target = w + o, o IN 1..lookback
 _IMPORT_WINDOW_SQL = """
-WITH spine AS (
-    SELECT CAST(:start_date AS DATE) AS target_date
-    UNION ALL
-    SELECT DATEADD(DAY, 1, target_date)
-    FROM spine
-    WHERE target_date < CAST(:end_date AS DATE)
-),
-voyage_detail AS (
+WITH equip AS
+(
+    -- Three rows. VoyageDetails states the port forecast in chassis codes only
+    -- (20CH / 40CH / 45CH), so resolving the EAV once here beats joining both
+    -- lookup tables against every voyage-detail row.
     SELECT
-        v.WORK_DATE,
-        TRY_CONVERT(INT, LEFT(equip.FieldValue, 2)) AS equip_length,
-        vd.Containers,
-        {period_cols}
+        ftv.FieldTypeValueId,
+        TRY_CONVERT(INT, LEFT(fv.FieldValue, 2)) AS equip_length
+    FROM DemandForecast.FieldTypeValue_tbl AS ftv
+    INNER JOIN DemandForecast.FieldValue_tbl AS fv
+        ON fv.FieldValueId = ftv.FieldValueId
+    WHERE ftv.FieldTypeId = :field_type_equipment
+      AND fv.FieldValue LIKE '%CH'
+      AND TRY_CONVERT(INT, LEFT(fv.FieldValue, 2)) IN :equip_lengths
+),
+offsets AS
+(
+    SELECT TOP (:lookback_days)
+           ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS day_offset
+    FROM sys.all_objects
+),
+contributions AS
+(
+    SELECT
+        DATEADD(DAY, o.day_offset, v.WORK_DATE) AS target_date,
+        e.equip_length,
+        vd.Containers{period_cols}
     FROM DemandForecast.Voyage_tbl {voyage_period} AS v
     INNER JOIN DemandForecast.VoyageDetails_tbl {detail_period} AS vd
         ON vd.VoyageId = v.VoyageId
-    INNER JOIN DemandForecast.FieldTypeValue_tbl AS equip_ftv
-        ON equip_ftv.FieldTypeValueId = vd.FieldTypeValueEquipTypeId
-       AND equip_ftv.FieldTypeId      = :field_type_equipment
-    INNER JOIN DemandForecast.FieldValue_tbl AS equip
-        ON equip.FieldValueId = equip_ftv.FieldValueId
+    INNER JOIN equip AS e
+        ON e.FieldTypeValueId = vd.FieldTypeValueEquipTypeId
+    CROSS JOIN offsets AS o
     WHERE vd.ModeId              = :mode_vessel
       AND vd.DirectionId         = :direction_import
       AND vd.ContainerLoadedFlag = :loaded_flag
       AND v.VoyageStatusId IN :voyage_statuses
       AND v.WORK_DATE IS NOT NULL
+      AND DATEADD(DAY, o.day_offset, v.WORK_DATE) BETWEEN :start_date AND :end_date
 )
 SELECT
-    s.target_date     AS observation_date,
-    d.equip_length,
-    SUM(d.Containers) AS imports_prior_window
-FROM spine AS s
-INNER JOIN voyage_detail AS d
-    ON  d.WORK_DATE >= DATEADD(DAY, -:lookback_days, s.target_date)
-    AND d.WORK_DATE <  s.target_date
-    {temporal_predicate}
-WHERE d.equip_length IN :equip_lengths
-GROUP BY s.target_date, d.equip_length
-OPTION (MAXRECURSION 0)
+    c.target_date     AS observation_date,
+    c.equip_length,
+    SUM(c.Containers) AS imports_prior_window
+FROM contributions AS c
+{temporal_predicate}
+GROUP BY c.target_date, c.equip_length
 """
 
-# Rows valid at midnight UTC on (target_date - as_of_lead_days). Voyage and
-# VoyageDetails are system-versioned independently, so both windows must
-# bracket that instant.
+# The as-of instant is derived from each contribution's OWN target date. Voyage
+# and VoyageDetails are system-versioned independently, so both periods must
+# contain that instant.
 _TEMPORAL_PREDICATE = """
-    AND d.VoyageSysStart <= DATEADD(DAY, -:as_of_lead_days, CAST(s.target_date AS DATETIME2))
-    AND d.VoyageSysEnd    > DATEADD(DAY, -:as_of_lead_days, CAST(s.target_date AS DATETIME2))
-    AND d.DetailSysStart <= DATEADD(DAY, -:as_of_lead_days, CAST(s.target_date AS DATETIME2))
-    AND d.DetailSysEnd    > DATEADD(DAY, -:as_of_lead_days, CAST(s.target_date AS DATETIME2))
+CROSS APPLY (
+    SELECT DATEADD(DAY, -:as_of_lead_days, CAST(c.target_date AS DATETIME2)) AS asof
+) AS a
+WHERE c.VoyageSysStart <= a.asof AND c.VoyageSysEnd > a.asof
+  AND c.DetailSysStart <= a.asof AND c.DetailSysEnd > a.asof
 """
 
-_PERIOD_COLS = """
+_PERIOD_COLS = """,
         v.SysStartTime  AS VoyageSysStart,
         v.SysEndTime    AS VoyageSysEnd,
         vd.SysStartTime AS DetailSysStart,
-        vd.SysEndTime   AS DetailSysEnd
-"""
+        vd.SysEndTime   AS DetailSysEnd"""
+
+# Bounded history read. The as-of instants this window can ask about span
+# exactly [start - lead, end - lead], so BETWEEN prunes versions that could
+# never satisfy the per-row bracket above - which still decides the answer.
+# FOR SYSTEM_TIME ALL read every version ever written and discarded most.
+_SYSTEM_TIME_PERIOD = "FOR SYSTEM_TIME BETWEEN :asof_min AND :asof_max"
 
 
 
@@ -234,19 +257,15 @@ class ReadGateway:
         """observation_date, equip_length, imports_prior_window.
 
         For each target date, the forecast import containers discharged over the
-        PRIOR `lookback_days` days, by chassis length. The window is summed in
-        SQL rather than by a pandas rolling sum because the point-in-time variant
-        needs the window and the temporal bracket in one statement.
-
-        VoyageDetails states the port's forecast in chassis codes (20CH / 40CH /
-        45CH and nothing else), so LEFT(FieldValue, 2) yields exactly 20, 40 or
-        45 and no container-to-chassis mapping is needed.
+        PRIOR `lookback_days` days, by chassis length. Summed in SQL rather than
+        by a pandas rolling sum because the point-in-time variant needs the
+        window and the temporal bracket in one statement.
 
         as_of_lead_days=None reads current voyage rows - fine for exploration,
         wrong for training a model that will score on forecasts. Set it to the
         run lead time and each row is read AS IT STOOD on the day the run would
-        have been made, so the model learns from forecasts of the same vintage it
-        gets in production. Training on current values fits a relationship to
+        have been made, so the model learns from forecasts of the same vintage
+        it gets in production. Training on current values fits a relationship to
         near-final numbers the scoring job will never have, which inflates
         in-sample fit and quietly degrades live accuracy.
 
@@ -257,9 +276,9 @@ class ReadGateway:
         point_in_time = as_of_lead_days is not None
         sql = text(
             _IMPORT_WINDOW_SQL.format(
-                voyage_period="FOR SYSTEM_TIME ALL" if point_in_time else "",
-                detail_period="FOR SYSTEM_TIME ALL" if point_in_time else "",
-                period_cols=_PERIOD_COLS if point_in_time else "CAST(NULL AS INT) AS _unused",
+                voyage_period=_SYSTEM_TIME_PERIOD if point_in_time else "",
+                detail_period=_SYSTEM_TIME_PERIOD if point_in_time else "",
+                period_cols=_PERIOD_COLS if point_in_time else "",
                 temporal_predicate=_TEMPORAL_PREDICATE if point_in_time else "",
             )
         ).bindparams(
@@ -275,10 +294,13 @@ class ReadGateway:
             "direction_import": DIRECTION_IMPORT,
             "field_type_equipment": int(FieldType.EQUIPMENT_TYPE),
             "loaded_flag": 1 if loaded_only else 0,
-            "equip_lengths": list(equip_lengths),
+            "equip_lengths": [int(v) for v in equip_lengths],
             "voyage_statuses": [int(s) for s in voyage_statuses],
         }
         if point_in_time:
+            lead = dt.timedelta(days=as_of_lead_days)
             params["as_of_lead_days"] = as_of_lead_days
+            params["asof_min"] = dt.datetime.combine(start_date, dt.time.min) - lead
+            params["asof_max"] = dt.datetime.combine(end_date, dt.time.min) - lead
 
         return pd.read_sql(sql, self._engine, params=params, parse_dates=["observation_date"])
