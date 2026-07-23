@@ -14,7 +14,7 @@ Prerequisite (same fail-fast contract as train_run.py): every referenced feature
 must already exist in features_tbl. Apply sql/04_seed_outgate_features.sql once
 before the first run. The write surface has no feature-creation proc by design.
 
-Run:  python -m pipelines.outgate_train_run --modified-by svc_forecast \\
+Run:  python -m pipelines.outgate_train_run --env dev --modified-by svc_forecast \
           --start 2023-01-01 --end 2025-06-30
 """
 from __future__ import annotations
@@ -23,7 +23,8 @@ import argparse
 import datetime as dt
 import logging
 
-from db.engine import engine
+from app.config.settings import DEFAULT_ENV, Env
+from db import engine as engine_module
 from db.reads import CHASSIS_LENGTHS, ReadGateway
 from db.writes import WriteGateway
 from forecast import outgate_features, training
@@ -175,7 +176,7 @@ def run_all_lengths(
     }
 
 
-# --- CLI --------------------------------------------------------------------
+# --- CLI (binds the engine to --env, then wires it to the gateways) ---------
 def _parse_date(s: str) -> dt.date:
     return dt.date.fromisoformat(s)
 
@@ -183,6 +184,12 @@ def _parse_date(s: str) -> dt.date:
 def main(argv=None) -> None:
     p = argparse.ArgumentParser(
         description="Train and register the CCM out-gate models (one per chassis length)."
+    )
+    p.add_argument(
+        "--env",
+        choices=[e.value for e in Env],
+        default=DEFAULT_ENV.value,
+        help="Database environment: dev, uat or prod (default: dev).",
     )
     p.add_argument("--start", required=True, type=_parse_date, help="window start YYYY-MM-DD")
     p.add_argument("--end", required=True, type=_parse_date, help="window end YYYY-MM-DD")
@@ -211,6 +218,13 @@ def main(argv=None) -> None:
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
 
+    # Bind the engine to the chosen environment before any DB work, exactly as
+    # entrypoints/cli.py does with db_session.configure().
+    env = Env(args.env)
+    engine_module.configure(env)
+    log.info("Target database environment: %s.", env.value)
+    engine = engine_module.get_engine()
+
     results = run_all_lengths(
         start_date=args.start,
         end_date=args.end,
@@ -227,7 +241,7 @@ def main(argv=None) -> None:
     )
     for length, result in results.items():
         print(
-            f"{model_name_for(length)}: model_id={result.model_id} "
+            f"[{env.value}] {model_name_for(length)}: model_id={result.model_id} "
             f"version={result.model_version} R^2={result.r_squared:.4f} "
             f"n={result.n_observations}"
         )
