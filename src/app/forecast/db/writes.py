@@ -122,11 +122,27 @@ class WriteGateway:
 
         Returns {"model_id": int, "model_version": int}.
         """
-        # Coefficients stay Decimal: DECIMAL(18,8) exactness for re-scoring.
+        # coefficient_value stays Decimal: DECIMAL(18,8) exactness for re-scoring.
+        # std_error / p_value bind as float, like every other measure column -
+        # they are inferential diagnostics, never used to reconstruct the model,
+        # and binding them as Decimal walks straight into the TVP sizing quirk in
+        # the module docstring. p_value is the worst case: a significant
+        # intercept quantizes to Decimal('0E-8'), pyodbc sizes the whole column
+        # from that one digit, and the next row with any real magnitude raises
+        # DataError 22003.
+        #
+        # coefficient_value cannot escape that way without losing exactness, so
+        # it is sized deliberately instead: the widest-magnitude coefficient is
+        # sent FIRST, giving pyodbc the largest integer part in the batch to
+        # infer precision from. Row order carries no meaning - every row is
+        # keyed by feature_id - so reordering is free.
+        ordered = coefficients.reindex(
+            coefficients["coefficient_value"].abs().sort_values(ascending=False).index
+        )
         coef_rows = [
             (int(r.feature_id), _dec(r.coefficient_value, _SCALE_8),
-             _dec(r.std_error, _SCALE_8), _dec(r.p_value, _SCALE_8))
-            for r in coefficients.itertuples(index=False)
+             _f(r.std_error), _f(r.p_value))
+            for r in ordered.itertuples(index=False)
         ]
         # Metrics are analysis-grade diagnostics -> float (see module docstring).
         metric_rows = [
