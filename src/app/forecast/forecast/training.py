@@ -186,3 +186,91 @@ def to_trained_model(res, *, model_id: int, feature_id_of: Mapping[str, int]) ->
         residual_std_error=float(np.sqrt(res.scale)),
         residual_df=int(res.df_resid),
     )
+
+
+def covariance_frame(res) -> pd.DataFrame:
+    """(X'X)^-1 as (row_feature_name, col_feature_name, covariance_value) rows -
+    the FULL k x k matrix, not the upper triangle.
+
+    This is statsmodels' normalized_cov_params, exactly the matrix
+    prediction_interval() multiplies the design vector against, stored verbatim
+    rather than reconstructed from X'X on read: re-inverting a near-singular
+    matrix elsewhere would not reproduce what pinv produced here, so the model
+    would score differently from how it was fitted.
+
+    Both axes are feature NAMES here (mapped to feature_id by the caller, as
+    coefficient_frame's are), so the stored matrix carries no column ORDER - a
+    reader pivots it into whatever order it read the coefficients in.
+
+    Values must be finite: a non-finite cell means the leverage term, and so
+    every prediction interval, would be NaN. Better to fail at registration.
+    """
+    names = _feature_names(res)
+    matrix = np.asarray(res.normalized_cov_params, dtype=float)
+    if matrix.shape != (len(names), len(names)):
+        raise ValueError(
+            f"Covariance shape {matrix.shape} does not match {len(names)} coefficients."
+        )
+    if not np.isfinite(matrix).all():
+        raise ValueError("Non-finite covariance entries; fit is degenerate.")
+
+    rows = np.repeat(names, len(names))
+    cols = np.tile(names, len(names))
+    return pd.DataFrame(
+        {
+            "row_feature_name": rows,
+            "col_feature_name": cols,
+            "covariance_value": matrix.reshape(-1),
+        }
+    )
+
+
+def trained_model_from_storage(
+    *,
+    model_id: int,
+    coefficients: Mapping[int, float],      # feature_id -> coefficient_value
+    covariance: pd.DataFrame,               # row_feature_id, col_feature_id, covariance_value
+    residual_std_error: float,
+    residual_df: int,
+    intercept_feature_id: int,
+) -> TrainedModel:
+    """Rebuild the scoring object from what the DB holds - the counterpart to
+    to_trained_model(), which builds it from a live fit.
+
+    Column order is chosen HERE (sorted feature_id) and the covariance matrix is
+    pivoted to match, which is the whole point of keying both axes by feature_id:
+    order is a local decision, never a stored one, so it cannot drift.
+    """
+    feature_order = tuple(sorted(coefficients))
+    if intercept_feature_id not in coefficients:
+        raise ValueError(f"Intercept feature_id={intercept_feature_id} has no coefficient.")
+
+    index = {fid: i for i, fid in enumerate(feature_order)}
+    k = len(feature_order)
+    matrix = np.full((k, k), np.nan, dtype=float)
+    for row in covariance.itertuples(index=False):
+        i = index.get(int(row.row_feature_id))
+        j = index.get(int(row.col_feature_id))
+        if i is None or j is None:
+            raise ValueError(
+                f"Covariance cell references feature_id "
+                f"{row.row_feature_id}/{row.col_feature_id} with no coefficient."
+            )
+        matrix[i, j] = float(row.covariance_value)
+
+    if np.isnan(matrix).any():
+        missing = int(np.isnan(matrix).sum())
+        raise ValueError(
+            f"Covariance for model_id={model_id} is incomplete: {missing} of {k * k} "
+            "cells absent. The full matrix is required."
+        )
+
+    return TrainedModel(
+        model_id=model_id,
+        intercept_feature_id=intercept_feature_id,
+        feature_order=feature_order,
+        coefficients=np.array([coefficients[f] for f in feature_order], dtype=float),
+        xtx_inv=matrix,
+        residual_std_error=float(residual_std_error),
+        residual_df=int(residual_df),
+    )
