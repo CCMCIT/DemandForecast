@@ -107,13 +107,21 @@ class WriteGateway:
         target_feature_id: int,
         coefficients: pd.DataFrame,  # feature_id, coefficient_value, std_error, p_value
         metrics: pd.DataFrame,       # metric_name, metric_value
+        covariance: pd.DataFrame,    # row_feature_id, col_feature_id, covariance_value
+        parameters: pd.DataFrame,    # parameter_name, parameter_value
         modified_by: str,
         model_version: int | None = None,   # None => proc assigns the next version
         trained_date=None,
         is_active: bool = False,
         retire_previous_active: bool = False,
     ) -> dict:
-        """Persist a trained model (registry + coefficients + metrics).
+        """Persist a trained model: registry + coefficients + metrics + covariance
+        + training parameters, in ONE proc call.
+
+        covariance is the FULL k x k (X'X)^-1 keyed by feature_id on both axes -
+        the piece that makes a stored model scoreable without re-fitting it.
+        parameters records the training configuration, so a scoring run needs
+        only a model_id.
 
         model_version=None lets usp_register_model assign the next version for
         model_name inside its own transaction (race-safe against the UNIQUE
@@ -149,11 +157,26 @@ class WriteGateway:
             (str(r.metric_name), _f(r.metric_value))
             for r in metrics.itertuples(index=False)
         ]
-        sql = "{CALL DemandForecast.usp_register_model (?, ?, ?, ?, ?, ?, ?, ?, ?)}"
+        # Covariance binds as FLOAT (SQL_DOUBLE), matching its column type -
+        # deliberately NOT Decimal. These are matrix-inversion artefacts across a
+        # very wide dynamic range; quantizing to a fixed scale would flush small
+        # off-diagonal terms to exactly zero and silently distort every
+        # prediction interval built from them. Nothing here needs exactness,
+        # only magnitude range - the opposite of coefficient_value.
+        covariance_rows = [
+            (int(r.row_feature_id), int(r.col_feature_id), _f(r.covariance_value))
+            for r in covariance.itertuples(index=False)
+        ]
+        parameter_rows = [
+            (str(r.parameter_name), str(r.parameter_value))
+            for r in parameters.itertuples(index=False)
+        ]
+        sql = "{CALL DemandForecast.usp_register_model (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}"
         params = [model_name, target_feature_id, coef_rows, metric_rows,
                   modified_by, model_version,
                   _as_date(trained_date) if trained_date is not None else None,
-                  int(is_active), int(retire_previous_active)]
+                  int(is_active), int(retire_previous_active),
+                  covariance_rows, parameter_rows]
         row = self._call_row(sql, params)
         return {"model_id": int(row[0]), "model_version": int(row[1])}
 
