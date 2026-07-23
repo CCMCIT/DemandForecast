@@ -25,7 +25,7 @@ import logging
 
 from app.config.settings import DEFAULT_ENV, Env
 from db import engine as engine_module
-from db.reads import CHASSIS_LENGTHS, ReadGateway
+from db.reads import CHASSIS_LENGTHS, ON_DOCK_LOCATION_CODES, ReadGateway
 from db.writes import WriteGateway
 from forecast import outgate_features, training
 from pipelines.train_run import TrainingResult
@@ -44,6 +44,33 @@ DEFAULT_AS_OF_LEAD_DAYS = 4
 
 def model_name_for(equip_length: int) -> str:
     return f"outgates_{equip_length}ft"
+
+
+def parameter_frame(
+    *,
+    equip_length: int,
+    train_start: dt.date,
+    train_end: dt.date,
+    lookback_days: int,
+    as_of_lead_days: int | None,
+    loaded_only: bool,
+    location_codes,
+) -> pd.DataFrame:
+    """Everything a scoring run would otherwise have to be TOLD, recorded with
+    the model. Values are strings in an unambiguous, culture-independent form
+    (ISO dates, 0/1 flags) - see model_parameters_tbl."""
+    rows = {
+        "equip_length": str(equip_length),
+        "train_start_date": train_start.isoformat(),
+        "train_end_date": train_end.isoformat(),
+        "lookback_days": str(lookback_days),
+        "as_of_lead_days": "none" if as_of_lead_days is None else str(as_of_lead_days),
+        "loaded_only": "1" if loaded_only else "0",
+        "location_scope": ",".join(location_codes),
+    }
+    return pd.DataFrame(
+        {"parameter_name": list(rows), "parameter_value": list(rows.values())}
+    )
 
 
 def run_outgate_training(
@@ -96,6 +123,7 @@ def run_outgate_training(
 
     coefficients = training.coefficient_frame(res)   # includes the '(Intercept)' row
     metrics = training.metric_frame(res)
+    covariance = training.covariance_frame(res)      # full k x k (X'X)^-1
 
     # --- resolve feature ids; fail fast on anything unseeded --------------
     needed = [*coefficients["feature_name"], target_feature]
@@ -109,6 +137,10 @@ def run_outgate_training(
         )
     coefficients = coefficients.assign(
         feature_id=coefficients["feature_name"].map(feature_id_of)
+    )
+    covariance = covariance.assign(
+        row_feature_id=covariance["row_feature_name"].map(feature_id_of),
+        col_feature_id=covariance["col_feature_name"].map(feature_id_of),
     )
 
     # --- write phase ------------------------------------------------------
@@ -126,6 +158,16 @@ def run_outgate_training(
         target_feature_id=int(feature_id_of[target_feature]),
         coefficients=coefficients[["feature_id", "coefficient_value", "std_error", "p_value"]],
         metrics=metrics,
+        covariance=covariance[["row_feature_id", "col_feature_id", "covariance_value"]],
+        parameters=parameter_frame(
+            equip_length=equip_length,
+            train_start=start_date,
+            train_end=end_date,
+            lookback_days=lookback_days,
+            as_of_lead_days=as_of_lead_days,
+            loaded_only=loaded_only,
+            location_codes=ON_DOCK_LOCATION_CODES,
+        ),
         modified_by=modified_by,
         model_version=model_version,
         is_active=activate,
