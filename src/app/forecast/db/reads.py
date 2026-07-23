@@ -40,7 +40,7 @@ FORECASTABLE_VOYAGE_STATUSES = (VoyageStatus.TO_CALL, VoyageStatus.CALLED)
 #
 # Shape note: this does NOT build a date spine and range-join voyages to it.
 # A voyage worked on day w contributes to exactly the target dates
-# w+1 .. w+lookback_days, so the rows are fanned out over a small offsets list
+# w+1 .. w+lookback_days, so the rows are fanned out over a small day_offsets list
 # and target_date is derived. That turns a range join - which SQL Server cannot
 # seek, and so nested-loops at (spine rows x voyage rows) - into an equijoin
 # against 4 rows. Equivalence:
@@ -61,7 +61,7 @@ WITH equip AS
       AND fv.FieldValue LIKE '%CH'
       AND TRY_CONVERT(INT, LEFT(fv.FieldValue, 2)) IN :equip_lengths
 ),
-offsets AS
+day_offsets AS   -- not "offsets": OFFSETS is a reserved T-SQL keyword
 (
     SELECT TOP (:lookback_days)
            ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS day_offset
@@ -78,7 +78,7 @@ contributions AS
         ON vd.VoyageId = v.VoyageId
     INNER JOIN equip AS e
         ON e.FieldTypeValueId = vd.FieldTypeValueEquipTypeId
-    CROSS JOIN offsets AS o
+    CROSS JOIN day_offsets AS o
     WHERE vd.ModeId              = :mode_vessel
       AND vd.DirectionId         = :direction_import
       AND vd.ContainerLoadedFlag = :loaded_flag
