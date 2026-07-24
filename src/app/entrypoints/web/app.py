@@ -44,6 +44,7 @@ _CLI_COMMANDS = {
     "process-gate-activity-pending": "process-gate-activity-pending",
     "process-on-terminal-pending": "process-on-terminal-pending",
     "process-out-of-service-pending": "process-out-of-service-pending",
+    "process-street-use-days-pending": "process-street-use-days-pending",
 }
 
 # One local user -> at most one running job. A background thread reads the child's
