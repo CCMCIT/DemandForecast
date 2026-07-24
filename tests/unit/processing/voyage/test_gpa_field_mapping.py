@@ -16,6 +16,7 @@ def _detail(**overrides):
     so map_row produces no VoyageDetails -- these tests only assert on fields."""
     base = dict(
         LoadId=1, VOYAGE="FX123", WORK_DATE=date(2025, 7, 4), WORKTIME=time(0, 0),
+        REPORTED="07032025",
         TERMINAL="GCT Bayonne", VESSEL="MSC ISABELLA", LINE="MSC", SERVICE="AE7",
         FROM_PORT="Ningbo", TO_PORT="New York",
         IM_FULL20=None, IM_FULL40=None, IM_FULL45=None, IM_MT=None,

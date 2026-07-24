@@ -1,6 +1,6 @@
-"""Unit test (no DB): voyage prevalidation rejects rows missing VOYAGE or WORK_DATE,
-or naming an equipment type the DB does not have."""
-from datetime import date
+"""Unit test (no DB): voyage prevalidation rejects rows missing VOYAGE, WORK_DATE,
+or REPORTED, or naming an equipment type the DB does not have."""
+from datetime import date, datetime
 
 import pytest
 
@@ -13,12 +13,14 @@ pytestmark = pytest.mark.unit
 EQUIPMENT = {"20CH", "40CH", "45CH"}
 
 
-def _voyage(voyage="FX123", work_date=date(2025, 7, 4), details=None) -> MappedVoyage:
+def _voyage(voyage="FX123", work_date=date(2025, 7, 4),
+            reported=datetime(2025, 7, 3), details=None) -> MappedVoyage:
     return MappedVoyage(
         file_id=1,
         voyage=voyage,
         work_date=work_date,
         work_time=None,
+        reported=reported,
         details=details or [],
     )
 
@@ -54,6 +56,11 @@ def test_none_voyage_raises():
 def test_missing_work_date_raises():
     with pytest.raises(InvalidFileError):
         validate_voyages([_voyage(work_date=None)], EQUIPMENT)
+
+
+def test_missing_reported_raises():
+    with pytest.raises(InvalidFileError):
+        validate_voyages([_voyage(reported=None)], EQUIPMENT)
 
 
 def test_error_message_names_the_problem_voyage():

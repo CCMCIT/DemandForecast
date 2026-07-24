@@ -51,6 +51,7 @@ def _seed(file_name: str, voyage: str, im_full20: int) -> int:
                 VOYAGE=voyage,
                 WORK_DATE=datetime.date(2026, 5, 22),
                 WORKTIME=datetime.time(0, 0),
+                REPORTED="05202026",
                 IM_FULL20=im_full20,
             )
         )
