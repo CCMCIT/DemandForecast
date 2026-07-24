@@ -7,9 +7,19 @@ named here and resolved to ids by the writer, so this module needs no DB access
 (Single Responsibility: mapping only). A new detail table adds its own mapper of
 the same shape; the writer and runner are reused unchanged (Open/Closed).
 """
+from app.db.repositories.gpa_file_detail_repository import _parse_reported
 from app.lookups import FieldType
 from app.processing.voyage.dto import MappedDetail, MappedVoyage
 from app.processing.voyage.field_mapping import build_fields
+
+
+def _reported_or_none(reported):
+    """The row's REPORTED as a datetime, or None if blank/unreadable.
+    Validation rejects the None, so a bad REPORTED fails the file up front."""
+    try:
+        return _parse_reported(reported)
+    except ValueError:
+        return None
 
 # (GpaFileDetail column, equipment name, direction name, mode name, container loaded flag)
 # The column names the container size -- IM_FULL20 is the 20-foot column -- so the
@@ -46,6 +56,7 @@ def map_row(detail) -> MappedVoyage:
         voyage=detail.VOYAGE,
         work_date=detail.WORK_DATE,
         work_time=detail.WORKTIME,
+        reported=_reported_or_none(detail.REPORTED),
         fields=build_fields(detail, GPA_FIELD_MAP),
     )
     for column, equipment, direction, mode, loaded in GPA_COLUMN_MAP:

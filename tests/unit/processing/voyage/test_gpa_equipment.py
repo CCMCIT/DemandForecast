@@ -20,6 +20,7 @@ def _detail(**overrides):
     only the ones a test sets produce a detail."""
     base = dict(
         LoadId=1, VOYAGE="FX123", WORK_DATE=date(2025, 7, 4), WORKTIME=time(0, 0),
+        REPORTED="07032025",
         TERMINAL=None, VESSEL=None, LINE=None, SERVICE=None,
         FROM_PORT=None, TO_PORT=None,
         IM_FULL20=None, IM_FULL40=None, IM_FULL45=None, IM_MT=None,

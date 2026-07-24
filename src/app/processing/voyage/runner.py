@@ -60,8 +60,9 @@ def process_file(file_id: int, progress=None) -> int:
         )
         mapped = [map_row(row) for row in rows]
 
-        # Reject the whole file up front if any row is unusable, before any write.
-        # On failure the except below rolls back (nothing written), marks the file
+        # Reject the whole file up front if any row is unusable (blank VOYAGE /
+        # WORK_DATE / REPORTED, or an unknown equipment type), before any write. On
+        # failure the except below rolls back (nothing written), marks the file
         # ERROR, and logs -- so a bad file is skipped, not partially processed.
         validate_voyages(mapped, set(equipment_ids))
 
@@ -186,7 +187,8 @@ def _classify_fallen_off(session, in_file_voyages, detail_repo_cls, file_id) -> 
             reported_date = reported_dates.get((voyage.LoadId, voyage.Voyage))
             if reported_date is None or voyage.WORK_DATE is None:
                 continue  # cannot classify without both dates
-            voyage.VoyageStatusId = classify(voyage.WORK_DATE, reported_date)
+            # reported_date carries a time now; classify compares at day granularity.
+            voyage.VoyageStatusId = classify(voyage.WORK_DATE, reported_date.date())
         session.commit()
     except Exception as exc:
         session.rollback()

@@ -18,7 +18,7 @@ def validate_voyages(mapped: list[MappedVoyage], equipment_names: set[str]) -> N
     """Raise InvalidFileError if any voyage is missing a required field or names an
     equipment type the DB does not have.
 
-    Required: VOYAGE (the unique key) and WORK_DATE.
+    Required: VOYAGE (the unique key), WORK_DATE, and REPORTED.
 
     `equipment_names` is what the DB holds for FieldType.EQUIPMENT_TYPE. That set is
     closed (the types map to a fixed external list), so a name outside it is a bug in
@@ -31,6 +31,8 @@ def validate_voyages(mapped: list[MappedVoyage], equipment_names: set[str]) -> N
             problems.append(f"row {index}: blank VOYAGE")
         if voyage.work_date is None:
             problems.append(f"voyage {voyage.voyage or f'row {index}'}: missing WORK_DATE")
+        if voyage.reported is None:
+            problems.append(f"voyage {voyage.voyage or f'row {index}'}: blank or unreadable REPORTED")
         for detail in voyage.details:
             if detail.equipment_name is not None and detail.equipment_name not in equipment_names:
                 problems.append(

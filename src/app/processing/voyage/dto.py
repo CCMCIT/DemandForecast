@@ -4,7 +4,7 @@ A mapper turns one source detail row into a MappedVoyage (the Voyage fields plus
 its VoyageDetails rows). The writer consumes this without knowing the source.
 """
 from dataclasses import dataclass, field
-from datetime import date, time
+from datetime import date, datetime, time
 
 
 @dataclass
@@ -32,5 +32,6 @@ class MappedVoyage:
     voyage: str
     work_date: date | None
     work_time: time | None
+    reported: datetime | None   # when the voyage was last reported; None if blank/unreadable
     details: list[MappedDetail] = field(default_factory=list)
     fields: list[MappedField] = field(default_factory=list)

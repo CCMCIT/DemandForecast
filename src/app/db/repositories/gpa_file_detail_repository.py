@@ -1,18 +1,24 @@
 """Repository for GpaFileDetail_tbl (GPA raw rows)."""
-from datetime import date, datetime
+from datetime import datetime
 
 from app.db.models.gpa_file_detail import GpaFileDetail
 
 
-def _parse_reported(reported: str | None) -> date | None:
-    """Parse a REPORTED value (MMDDYYYY string, e.g. '07032025') to a date, or
-    None if it is absent, blank, or unparseable."""
-    if not reported:
-        return None
-    try:
-        return datetime.strptime(reported.strip(), "%m%d%Y").date()
-    except ValueError:
-        return None
+def _parse_reported(reported: str | None) -> datetime:
+    """Parse a REPORTED value into a datetime, keeping the time.
+
+    Accepts 'MMDDYYYY' (-> midnight) and 'MMDDYYYYHHMM' (e.g. '071020261348'
+    -> 2026-07-10 13:48). Raises ValueError, naming the value, on anything blank
+    or unreadable; callers either surface that (a new file is rejected) or skip
+    the row (old data read back from the DB).
+    """
+    text = (reported or "").strip()
+    for fmt in ("%m%d%Y%H%M", "%m%d%Y"):
+        try:
+            return datetime.strptime(text, fmt)
+        except ValueError:
+            continue
+    raise ValueError(f"unreadable REPORTED value: {reported!r}")
 
 
 class GpaFileDetailRepository:
@@ -29,23 +35,15 @@ class GpaFileDetailRepository:
             .all()
         )
 
-    def get_reported_date(self, file_id: int, voyage: str) -> date | None:
-        """The parsed REPORTED date for a voyage's row in a given file, or None."""
-        row = (
-            self.session.query(GpaFileDetail.REPORTED)
-            .filter(GpaFileDetail.LoadId == file_id, GpaFileDetail.VOYAGE == voyage)
-            .first()
-        )
-        return _parse_reported(row.REPORTED) if row is not None else None
-
     def get_reported_dates(
         self, file_voyage_pairs: list[tuple[int, str]]
-    ) -> dict[tuple[int, str], date]:
-        """Batch form of get_reported_date: {(LoadId, Voyage): date} for the given
-        (LoadId, Voyage) pairs, fetched in ONE query instead of one per pair.
+    ) -> dict[tuple[int, str], datetime]:
+        """Parsed REPORTED for each (LoadId, Voyage), read from the DB in ONE query.
 
-        A pair whose REPORTED is absent/blank/unparseable is simply omitted, so the
-        caller treats a missing key exactly like get_reported_date returning None.
+        Reads dates back for old voyages already stored (the fallen-off
+        classification). A row that is missing, blank, or unreadable is skipped, so
+        one bad legacy row cannot crash the sweep. New files are validated up front
+        by validate_voyages, not here.
         """
         if not file_voyage_pairs:
             return {}
@@ -64,12 +62,13 @@ class GpaFileDetailRepository:
             )
             .all()
         )
-        result: dict[tuple[int, str], date] = {}
+        result: dict[tuple[int, str], datetime] = {}
         for file_id, voyage, reported in rows:
             key = (file_id, voyage)
             if key not in wanted:
                 continue
-            parsed = _parse_reported(reported)
-            if parsed is not None:
-                result[key] = parsed
+            try:
+                result[key] = _parse_reported(reported)
+            except ValueError:
+                continue  # blank/unreadable legacy row -> skip; the caller can't date it
         return result
