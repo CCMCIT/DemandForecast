@@ -15,6 +15,8 @@ by a worker or API entrypoint without change. Commands:
   process-on-terminal-pending                       every on-terminal file at LoadStatusId=2
   process-out-of-service --load-id <id>             one file's CMS rows -> OutOfServiceUnitsDetail_tbl
   process-out-of-service-pending                    every out-of-service file at LoadStatusId=2
+  process-street-use-days --load-id <id>            one file's CMS rows -> StreetUseDaysDetail_tbl
+  process-street-use-days-pending                   every street-use-days file at LoadStatusId=2
 
 Every command also accepts --env <dev|uat|prod> to pick the target database
 (default: dev). The numbered listing shown by `--help` is generated from _COMMANDS.
@@ -32,6 +34,7 @@ from app.processing.voyage import runner as processing_runner
 from app.processing.gate_activity import runner as gate_activity_runner
 from app.processing.on_terminal import runner as on_terminal_runner
 from app.processing.out_of_service import runner as out_of_service_runner
+from app.processing.street_use_days import runner as street_use_days_runner
 
 
 # name -> (one-line description, example). Drives both the numbered --help
@@ -80,6 +83,14 @@ _COMMANDS = {
     "process-out-of-service-pending": (
         "Process every out-of-service file with LoadStatusId=2 (Inserted into LoadDetail).",
         "python run.py process-out-of-service-pending",
+    ),
+    "process-street-use-days": (
+        "Map one file's CMS street-use-days rows into StreetUseDaysDetail_tbl.",
+        "python run.py process-street-use-days --load-id 123",
+    ),
+    "process-street-use-days-pending": (
+        "Process every street-use-days file with LoadStatusId=2 (Inserted into LoadDetail).",
+        "python run.py process-street-use-days-pending",
     ),
     "import-status": (
         "Show how many files were imported successfully out of the total.",
@@ -197,6 +208,13 @@ def main(argv=None) -> None:
 
     _add_command(sub, "process-out-of-service-pending", parents=[common])
 
+    process_street_use_days = _add_command(sub, "process-street-use-days", parents=[common])
+    process_street_use_days.add_argument(
+        "--load-id", required=True, type=int, dest="load_id", help="LoadId to process"
+    )
+
+    _add_command(sub, "process-street-use-days-pending", parents=[common])
+
     _add_command(sub, "import-status", parents=[common])
 
     args = parser.parse_args(argv)
@@ -228,6 +246,8 @@ _START_MESSAGES = {
     "process-on-terminal-pending": "Processing...",
     "process-out-of-service": "Processing...",
     "process-out-of-service-pending": "Processing...",
+    "process-street-use-days": "Processing...",
+    "process-street-use-days-pending": "Processing...",
     "import-status": "Checking...",
 }
 
@@ -330,6 +350,23 @@ def run_command(args) -> None:
         )
         print(
             f"Out of service pending run complete. "
+            f"processed={len(result['processed'])} "
+            f"failed={len(result['failed'])}"
+        )
+    elif args.command == "process-street-use-days":
+        print(f"  processing LoadId={args.load_id}")
+        started = time.perf_counter()
+        count = street_use_days_runner.process_file(args.load_id)
+        print(
+            f"Processed {count} street-use-days row(s) for LoadId={args.load_id} "
+            f"in {_format_elapsed(time.perf_counter() - started)}"
+        )
+    elif args.command == "process-street-use-days-pending":
+        result = street_use_days_runner.process_pending(
+            progress=partial(_print_progress, "street-use-days rows")
+        )
+        print(
+            f"Street use days pending run complete. "
             f"processed={len(result['processed'])} "
             f"failed={len(result['failed'])}"
         )
