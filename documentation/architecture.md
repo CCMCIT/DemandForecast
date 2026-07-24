@@ -89,6 +89,8 @@ The full ER diagram, exported from `DemandForecast_db_schema.drawio`:
 
 ![Database schema (1)](DemandForecast_db_schema1.png)
 
+![Database schema (1.5)](DemandForecast_db_schema1.5.png)
+
 ![Database schema (2)](DemandForecast_db_schema2.png)
 
 ![Database schema (3)](DemandForecast_db_schema3.png)
