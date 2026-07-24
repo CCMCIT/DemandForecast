@@ -14,6 +14,7 @@ class FileType(IntEnum):
     GATE_ACTIVITIES = 4  # 'Gate Activities'
     ON_TERMINAL = 5      # 'On Terminal'
     OUT_OF_SERVICE = 6   # 'Out of Service'
+    STREET_USE_DAYS = 7  # 'Street Use Days'
 
 
 class LoadStatus(IntEnum):
